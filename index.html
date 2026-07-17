@@ -1008,3 +1008,26 @@ if(pl)pl.innerHTML='<span style="color:#ff6b6b">❌ 加载出错</span><br><span
 </script>
 </body>
 </html>
+// === AUTO UPDATE: Check for new version on each open ===
+(function(){
+  const APP_VERSION = 6; // bump this after each GitHub push
+  const VKEY = 'nv_ver';
+  const oldVer = parseInt(localStorage.getItem(VKEY)) || 0;
+  if (oldVer > 0 && oldVer < APP_VERSION) {
+    // New version detected - reload to get fresh code
+    console.log('PWA updated v' + oldVer + ' -> v' + APP_VERSION);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(function(reg) {
+        if (reg) reg.update();
+      });
+    }
+    setTimeout(function() { location.reload(true); }, 500);
+  }
+  localStorage.setItem(VKEY, APP_VERSION);
+  // Also clear cache on load to ensure fresh data next time
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      names.forEach(function(n) { if (n.includes('nutrition')) caches.delete(n); });
+    });
+  }
+})();
