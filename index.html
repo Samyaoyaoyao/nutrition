@@ -353,7 +353,24 @@ button{cursor:pointer}
 <div class="nav-i" onclick="nav('data')"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>数据</span></div>
 <div class="nav-i" onclick="nav('ai')"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2v1h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h3V4a2 2 0 012-2z"/><circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M9 15h6" stroke-width="1.5"/></svg><span>AI</span></div>
 </nav>
+
+<!-- FLOATING CHAT -->
+<div id="chat-bubble" onclick="toggleChat()">💬</div>
+<div id="chat-panel">
+<div id="chat-header"><span>💬 快捷指令</span><div id="chat-close" onclick="toggleChat()">✕</div></div>
+<div id="chat-body">
+<div class="chat-msg bot">你好 SAM 👋<br>📷 <b>最佳用法</b>：拍照发给我 → 我识别食物 → 复制结果粘贴到这里<br>或直接输入指令：<br>• 「正餐 鸡胸肉300g 米饭200g」<br>• 「体重 58.5」<br>• 「一项完成」「今天没运动」<br>• 「今天吃了什么」「营养够吗」</div>
+</div>
+<div id="chat-input-bar">
+<div id="chat-paste" onclick="chatPaste()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px" title="粘贴识别结果">📋</div>
+<input id="chat-input" type="text" placeholder="输入指令或粘贴识别结果" onkeydown="if(event.key==='Enter')chatSend()">
+<div id="chat-send" onclick="chatSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+</div>
+</div>
+</body>
 <script>
+const APP_VERSION = 10;
+
 // === URL HASH AUTO-IMPORT ===
 (function(){
   if(!location.hash||location.hash.length<2)return;
@@ -1280,44 +1297,6 @@ function parseCommand(q){
   return{text:'🤔 没理解，试试：\u003cbr\u003e• 「正餐 鸡胸肉300g 米饭200g」\u003cbr\u003e• 「体重 58.5」\u003cbr\u003e• 「今天吃了什么」\u003cbr\u003e• 「营养够吗」\u003cbr\u003e• 输入「帮助」查看更多'};
 }
 
+
 </script>
-
-<!-- FLOATING CHAT -->
-<div id="chat-bubble" onclick="toggleChat()">💬</div>
-<div id="chat-panel">
-<div id="chat-header"><span>💬 快捷指令</span><div id="chat-close" onclick="toggleChat()">✕</div></div>
-<div id="chat-body">
-<div class="chat-msg bot">你好 SAM 👋<br>📷 <b>最佳用法</b>：拍照发给我 → 我识别食物 → 复制结果粘贴到这里<br>或直接输入指令：<br>• 「正餐 鸡胸肉300g 米饭200g」<br>• 「体重 58.5」<br>• 「一项完成」「今天没运动」<br>• 「今天吃了什么」「营养够吗」</div>
-</div>
-<div id="chat-input-bar">
-<div id="chat-paste" onclick="chatPaste()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px" title="粘贴识别结果">📋</div>
-<input id="chat-input" type="text" placeholder="输入指令或粘贴识别结果" onkeydown="if(event.key==='Enter')chatSend()">
-<div id="chat-send" onclick="chatSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
-</div>
-</div>
-</body>
 </html>
-
-// === AUTO UPDATE: Check for new version on each open ===
-(function(){
-  const APP_VERSION = 9; // bump this after each GitHub push
-  const VKEY = 'nv_ver';
-  const oldVer = parseInt(localStorage.getItem(VKEY)) || 0;
-  if (oldVer > 0 && oldVer < APP_VERSION) {
-    // New version detected - reload to get fresh code
-    console.log('PWA updated v' + oldVer + ' -> v' + APP_VERSION);
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then(function(reg) {
-        if (reg) reg.update();
-      });
-    }
-    setTimeout(function() { location.reload(true); }, 500);
-  }
-  localStorage.setItem(VKEY, APP_VERSION);
-  // Also clear cache on load to ensure fresh data next time
-  if ('caches' in window) {
-    caches.keys().then(function(names) {
-      names.forEach(function(n) { if (n.includes('nutrition')) caches.delete(n); });
-    });
-  }
-})();
