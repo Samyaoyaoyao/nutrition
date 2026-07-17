@@ -354,6 +354,38 @@ button{cursor:pointer}
 <div class="nav-i" onclick="nav('ai')"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2v1h3a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h3V4a2 2 0 012-2z"/><circle cx="9" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M9 15h6" stroke-width="1.5"/></svg><span>AI</span></div>
 </nav>
 <script>
+// === URL HASH AUTO-IMPORT ===
+(function(){
+  if(!location.hash||location.hash.length<2)return;
+  var h=location.hash.substring(1);
+  if(h.indexOf('import=')!==0)return;
+  var encoded=h.substring(7);
+  try{
+    var json=decodeURIComponent(escape(atob(encoded)));
+    var items=JSON.parse(json);
+    var d=tD();
+    if(items.meals&&items.meals.length){
+      items.meals.forEach(function(m){
+        d.meals.push(m);
+      });
+      rC(d);save();
+    }
+    // Clear hash and navigate to home
+    history.replaceState(null,null,location.pathname);
+    // Show success toast after a short delay
+    setTimeout(function(){
+      var tk=Math.round(d.totalNutrition.kcal);
+      var tp=Math.round(d.totalNutrition.pro);
+      toast('\u2705 \u5df2\u5bfc\u5165'+items.meals.length+'\u9879\uff0c'+tk+'kcal');
+    },500);
+    // Refresh all views
+    setTimeout(function(){rH();rEx();rRc();rNS();rFT();rAs();nav('home');},800);
+  }catch(e){
+    console.error('Import error:',e);
+    toast('\u274c \u5bfc\u5165\u5931\u8d25');
+  }
+})();
+
 window.onerror=function(m,s,l,c,e){var d=document.getElementById('err-box');if(!d){d=document.createElement('div');d.id='err-box';d.style.cssText='position:fixed;top:0;left:0;right:0;background:#ff0;color:#000;padding:10px;font-size:12px;z-index:99999;max-height:40vh;overflow:auto;font-family:monospace;word-break:break-all';document.body.appendChild(d);}d.textContent+='['+l+':'+c+'] '+m+'\n'+(e&&e.stack?e.stack.substring(0,300):'')+'\n---\n';return false;};
 window.addEventListener('unhandledrejection',function(ev){var d=document.getElementById('err-box');if(!d){d=document.createElement('div');d.id='err-box';d.style.cssText='position:fixed;top:0;left:0;right:0;background:#ff0;color:#000;padding:10px;font-size:12px;z-index:99999;max-height:40vh;overflow:auto;font-family:monospace';document.body.appendChild(d);}d.textContent+='Promise: '+ev.reason+'\n---\n';});
 // ═══════ MINI CHART (replaces Chart.js) ═══════
@@ -1268,7 +1300,7 @@ function parseCommand(q){
 
 // === AUTO UPDATE: Check for new version on each open ===
 (function(){
-  const APP_VERSION = 8; // bump this after each GitHub push
+  const APP_VERSION = 9; // bump this after each GitHub push
   const VKEY = 'nv_ver';
   const oldVer = parseInt(localStorage.getItem(VKEY)) || 0;
   if (oldVer > 0 && oldVer < APP_VERSION) {
