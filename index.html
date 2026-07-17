@@ -202,6 +202,8 @@ button{cursor:pointer}
 #chat-send{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 #chat-send:active{opacity:.7}
 #chat-send svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}
+.ex-chk.cancelled{background:var(--bg3);border-color:var(--text3);opacity:0.5}
+.tl-i.cancelled{opacity:0.4}.tl-i.cancelled .tl-t{color:var(--text3)}
 </style>
 </head>
 <body data-theme="dark">
@@ -753,9 +755,9 @@ function rng(l,v,m,u,c,inv){const p=inv?Math.max(0,1-v/m):Math.min(v/m,1);const 
 function rTL(){const ss=S.settings,now=new Date(),nm=now.getHours()*60+now.getMinutes();
 const ev=[{t:ss.wakeUp,l:'起床',i:'🌅',tp:'wake'},{t:'10:00',l:'美式气泡水',i:'💧',tp:'other'},{t:ss.mealTime,l:'正餐(OMAD)',i:'🍽️',tp:'meal'},{t:'17:30',l:'运动',i:'🏃',tp:'exercise'},{t:'01:30',l:'睡前补剂',i:'💊',tp:'supp'},{t:ss.sleepTime,l:'睡觉',i:'🌙',tp:'sleep'}];
 const td=TD();if(!S.eventRecords[td])S.eventRecords[td]={};const rc=S.eventRecords[td];const tl=document.getElementById('h-tl');tl.innerHTML='';
-ev.forEach((e,i)=>{const[eh,em]=e.t.split(':').map(Number);let vm=eh*60+em;if((e.t==='01:30'||e.t===ss.sleepTime)&&nm<720)vm+=1440;const dn=rc[i]||nm>=vm||(nm<360&&e.t===ss.sleepTime);const d=document.createElement('div');d.className='tl-i'+(dn?' done':'');d.innerHTML='<span class="tl-t">'+e.t+'</span>'+e.i+' '+e.l+' <span style="margin-left:auto;font-size:12px">'+(dn?'✅':'⏳')+'</span>';d.onclick=()=>oEP(i,e,dn);tl.appendChild(d);});}
+ev.forEach((e,i)=>{const st=rc[i]||0;const icons=['⏳','✅','🚫'];const d=document.createElement('div');d.className='tl-i'+(st===1?' done':st===2?' cancelled':'');d.innerHTML='<span class="tl-t">'+e.t+'</span>'+e.i+' '+e.l+' <span style="margin-left:auto;font-size:12px">'+icons[st]+'</span>';d.onclick=()=>oEP(i,e);tl.appendChild(d);});}
 
-function rSL(){const rc=tSp(),el=document.getElementById('h-supp');el.innerHTML='';S.supps.forEach((sp,i)=>{const dn=rc[i]||false;const d=document.createElement('div');d.className='supp-i';d.innerHTML='<div class="supp-n"><div class="supp-nm">'+sp.n+'</div><div class="supp-ds">'+sp.dose+' · '+(sp.time==='meal'?'随餐':sp.time==='bedtime'?'睡前':'晨起')+'</div></div><div class="supp-c'+(dn?' done':'')+'" onclick="tSp2('+i+')">'+(dn?'✓':'')+'</div>';el.appendChild(d);});}
+function rSL(){const rc=tSp(),el=document.getElementById('h-supp');el.innerHTML='';S.supps.forEach((sp,i)=>{const st=rc[i]||0;const d=document.createElement('div');d.className='supp-i';d.innerHTML='<div class="supp-n"><div class="supp-nm">'+sp.n+'</div><div class="supp-ds">'+sp.dose+' · '+(sp.time==='meal'?'随餐':sp.time==='bedtime'?'睡前':'晨起')+'</div></div><div class="supp-c'+(st===1?' done':st===2?' cancelled':'')+'" onclick="tSp2('+i+')">'+(dn?'✓':'')+'</div>';el.appendChild(d);});}
 function tSp2(i){const r=tSp();r[i]=!r[i];save();rSL();toast(r[i]?'✅':'已取消');}
 
 function rRw(){const tn=tD().totalNutrition,ss=S.settings,cl=ss.calMax-tn.kcal,sf=ss.fatMax-tn.sfat,z=document.getElementById('reward-zone');if(cl>100&&sf>2){z.innerHTML='<div class="reward"><div class="reward-t">🍫 今日奖励</div><div class="reward-d">'+(sf>5?(cl>180?'🍦 来支八喜冰淇淋？(210kcal)':'🍫 东北大板冰棍？(170kcal)'):'🍦 麦当劳甜筒？(145kcal)')+'</div></div>';}else z.innerHTML='';}
@@ -838,8 +840,8 @@ if(tp==='evening')setTimeout(rAnom,100);
 autoArchive();}
 
 // ═══════ EXERCISE ═══════
-function rEx(){const rc=tEx(),el=document.getElementById('ex-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const dn=rc[i]||false;const d=document.createElement('div');d.className='ex-c';d.style.cursor='pointer';d.onclick=function(e){if(e.target.classList.contains('tm-link'))return;tEx2(i);};d.innerHTML='<div class="ex-info"><div class="ex-n">'+ex.n+'</div><div class="ex-d">'+ex.d+'</div></div><div class="ex-chk'+(dn?' done':'')+'"></div>';el.appendChild(d);});document.getElementById('tm-best').textContent=(tEx().timerBest||0)>0?'最佳：'+tEx().timerBest+'秒':'最佳：--';rCEx();}
-function tEx2(i){const r=tEx();r[i]=!r[i];save();rEx();toast(r[i]?'✅ '+S.exercises[i].n:'已取消');}
+function rEx(){const rc=tEx(),el=document.getElementById('ex-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const st=rc[i]||0;const d=document.createElement('div');d.className='ex-c';d.style.cursor='pointer';d.onclick=function(e){if(e.target.classList.contains('tm-link'))return;tEx2(i);};d.innerHTML='<div class="ex-info"><div class="ex-n">'+ex.n+'</div><div class="ex-d">'+ex.d+'</div></div><div class="ex-chk'+(st===1?' done':st===2?' cancelled':'')+'"></div>';el.appendChild(d);});document.getElementById('tm-best').textContent=(tEx().timerBest||0)>0?'最佳：'+tEx().timerBest+'秒':'最佳：--';rCEx();}
+function tEx2(i){const r=tEx();const c=r[i]||0;r[i]=(c+1)%3;save();rEx();var labels=['\u274c \u672a\u5b8c\u6210','\u2705 '+S.exercises[i].n,'\ud83d\udeab \u5df2\u53d6\u6d88'];toast(labels[r[i]]);}
 function rCEx(){const el=document.getElementById('ex-custom-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const d=document.createElement('div');d.className='diet-r';d.innerHTML='<div><div class="dn">'+ex.n+'</div><div class="dd">'+ex.d+'</div></div><span class="del-btn" onclick="dEx('+i+')">×</span>';el.appendChild(d);});}
 function saveExItem(){const n=document.getElementById('ex-n').value.trim(),d=document.getElementById('ex-d').value.trim();if(!n){toast('请输入名称');return;}S.exercises.push({n,d:d||''});save();closeModal('ex-modal');rEx();toast('✅');document.getElementById('ex-n').value='';document.getElementById('ex-d').value='';}
 function dEx(i){if(confirm('删除？')){S.exercises.splice(i,1);save();rEx();toast('已删除');}}
@@ -1036,12 +1038,21 @@ let h='';it.forEach(i=>{let p,co;if(i.min&&i.max){p=Math.min(i.v/i.max*100,100);
 const d=i.v>=100?Math.round(i.v):i.v.toFixed(1);h+='<div class="nd-item"><span class="nd-l">'+i.l+'</span><div class="nd-bar"><div class="nfill" style="width:'+Math.max(p,2)+'%;background:'+co+'"></div></div><span class="nd-v">'+d+i.u+' <span style="color:var(--text3);font-size:9px">'+i.ref+'</span></span></div>';});c.innerHTML=h;}
 
 // ═══════ EVENT POPUP ═══════
-function oEP(idx,ev,dn){document.getElementById('ev-pop-title').textContent=ev.i+' '+ev.l;const c=document.getElementById('ev-pop-content');const td=TD();if(!S.eventRecords[td])S.eventRecords[td]={};
-if(ev.tp==='meal')c.innerHTML='<div style="margin-bottom:10px;font-size:13px;color:var(--text2)">快速录入</div><div style="display:flex;gap:8px"><div class="btn btn-p btn-sm" onclick="cEP();nav(\'diet\');setTimeout(startVoice,300)">🎙️ 语音</div><div class="btn btn-gh btn-sm" onclick="cEP();nav(\'diet\')">📋 食材库</div></div><div style="margin-top:10px"><div class="btn btn-gh btn-sm" onclick="mED('+idx+')">'+(dn?'取消完成':'标记完成')+'</div></div>';
-else c.innerHTML='<div style="text-align:center"><div class="btn '+(dn?'btn-r':'btn-g')+' btn-sm" onclick="mED('+idx+')">'+(dn?'❌ 取消':'✅ 完成')+'</div></div>';
-document.getElementById('ev-pop').classList.add('open');document.getElementById('ev-pop-bg').classList.add('open');}
+function oEP(idx,ev){document.getElementById('ev-pop-title').textContent=ev.i+' '+ev.l;const c=document.getElementById('ev-pop-content');const td=TD();if(!S.eventRecords[td])S.eventRecords[td]={};const st=S.eventRecords[td][idx]||0;const icons=['','✅','🚫'];const labels=['没做','已完成','已取消'];let h='<div style="text-align:center;margin-bottom:12px"><span style="font-size:24px">'+icons[st]+'</span><div style="font-size:13px;color:var(--text2);margin-top:4px">当前：'+labels[st]+'</div></div>';
+h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
+h+='<div class="btn btn-sm '+(st===1?'btn-g':'btn-gh')+'" onclick="mED('+idx+',0)">⏳ 没做</div>';
+h+='<div class="btn btn-sm '+(st===1?'btn-g':'btn-gh')+'" onclick="mED('+idx+',1)">✅ 完成</div>';
+h+='<div class="btn btn-sm '+(st===2?'btn-r':'btn-gh')+'" onclick="mED('+idx+',2)">🚫 取消</div>';
+h+='</div>';
+// Task-specific actions
+if(ev.tp==='meal')h+='<div style="margin-top:12px;border-top:1px solid var(--bg3);padding-top:10px"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">快速录入饮食</div><div style="display:flex;gap:8px"><div class="btn btn-p btn-sm" onclick="cEP();nav(\'diet\');setTimeout(startVoice,300)">️ 语音</div><div class="btn btn-gh btn-sm" onclick="cEP();nav(\'diet\')">📋 食材库</div></div></div>';
+else if(ev.tp==='exercise')h+='<div style="margin-top:12px;border-top:1px solid var(--bg3);padding-top:10px"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">记录运动</div><div style="display:flex;gap:8px"><div class="btn btn-gh btn-sm" onclick="cEP();nav(\'exercise\')">🏋️ 去运动</div></div></div>';
+else if(ev.tp==='supp')h+='<div style="margin-top:12px;border-top:1px solid var(--bg3);padding-top:10px"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">补剂提醒</div><div style="font-size:12px;color:var(--text3)"> 镁复合剂2粒随餐，鱼油1粒睡前</div></div>';
+else if(ev.tp==='wake')h+='<div style="margin-top:12px;border-top:1px solid var(--bg3);padding-top:10px"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">晨起称重</div><div style="display:flex;gap:8px"><div class="btn btn-gh btn-sm" onclick="cEP();document.getElementById(\'wg-input\').focus()">⚖️ 记录体重</div></div></div>';
+else if(ev.tp==='sleep')h+='<div style="margin-top:12px;border-top:1px solid var(--bg3);padding-top:10px"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">睡前</div><div style="font-size:12px;color:var(--text3)"> 鱼油1粒 ·  平板支撑</div></div>';
+c.innerHTML=h;document.getElementById('ev-pop').classList.add('open');document.getElementById('ev-pop-bg').classList.add('open');}
 function cEP(){document.getElementById('ev-pop').classList.remove('open');document.getElementById('ev-pop-bg').classList.remove('open');}
-function mED(i){const td=TD();if(!S.eventRecords[td])S.eventRecords[td]={};S.eventRecords[td][i]=!S.eventRecords[td][i];save();cEP();rTL();toast(S.eventRecords[td][i]?'✅':'已取消');}
+function mED(i,s){const td=TD();if(!S.eventRecords[td])S.eventRecords[td]={};const old=S.eventRecords[td][i]||0;if(s!==undefined)S.eventRecords[td][i]=s;else S.eventRecords[td][i]=(old+1)%3;save();cEP();rTL();var lb=['⏳ 标记没做','✅ 已完成',' 已取消'];toast(lb[S.eventRecords[td][i]]||'状态已更新');}
 
 // ═══════ AI ═══════
 function rAI(){document.getElementById('ai-msgs').scrollTop=document.getElementById('ai-msgs').scrollHeight;}
