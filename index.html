@@ -16,7 +16,7 @@
 [data-theme="light"]{--bg:#f2f2f8;--bg2:#fff;--bg3:#e6e6f0;--card:#fff;--card2:#f6f6fc;--text:#1a1a2e;--text2:#555570;--text3:#8888a0;--shadow:0 2px 16px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{overflow-x:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding-top:calc(var(--safe-top) + 4px);padding-bottom:calc(var(--safe-bottom) + 68px);line-height:1.5;font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding-top:calc(var(--safe-top) + 4px);padding-bottom:calc(var(--safe-bottom) + 72px);line-height:1.5;font-size:14px}
 input,select,textarea,button{font:inherit;color:inherit;border:none;outline:none;background:none}
 button{cursor:pointer}
 .page{display:none;padding:8px 14px 16px;max-width:500px;margin:0 auto}
@@ -178,6 +178,30 @@ button{cursor:pointer}
 .cal-d{padding:7px 1px;border-radius:7px;cursor:pointer;color:var(--text3)}
 .cal-d.today{border:1.5px solid var(--accent2)}
 .cal-d[data]{background:var(--accent);color:#fff;font-weight:600}
+
+/* Floating Chat Widget */
+#chat-bubble{position:fixed;right:16px;bottom:calc(70px + var(--safe-bottom));width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(108,92,231,.4);z-index:200;transition:transform .2s}
+#chat-bubble:active{transform:scale(.92)}
+#chat-bubble.hidden{display:none}
+#chat-panel{position:fixed;left:8px;right:8px;bottom:calc(68px + var(--safe-bottom));max-height:55vh;background:var(--bg2);border-radius:16px 16px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,.4);z-index:201;display:flex;flex-direction:column;transform:translateY(110%);transition:transform .3s ease;overflow:hidden}
+#chat-panel.open{transform:translateY(0)}
+#chat-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+#chat-header span{font-weight:700;font-size:15px}
+#chat-close{font-size:20px;cursor:pointer;color:var(--text3);padding:4px 8px}
+#chat-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch;min-height:120px}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;animation:fadeUp .2s ease}
+.chat-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.bot{align-self:flex-start;background:var(--card);color:var(--text);border-bottom-left-radius:4px}
+.chat-msg.bot .chat-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chat-msg.bot .chat-act-btn{padding:5px 12px;border-radius:8px;background:var(--bg3);color:var(--text);font-size:12px;cursor:pointer;border:1px solid rgba(255,255,255,.06)}
+.chat-msg.bot .chat-act-btn:active{background:var(--accent);color:#fff}
+#chat-input-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;background:var(--bg2)}
+#chat-input{flex:1;padding:10px 14px;border-radius:20px;background:var(--bg3);color:var(--text);font-size:14px;border:1.5px solid transparent;transition:border-color .2s}
+#chat-input:focus{border-color:var(--accent)}
+#chat-input::placeholder{color:var(--text3)}
+#chat-send{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+#chat-send:active{opacity:.7}
+#chat-send svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}
 </style>
 </head>
 <body data-theme="dark">
@@ -208,7 +232,7 @@ button{cursor:pointer}
 <div class="input-btn" onclick="document.getElementById('d-search').focus();scrollToFoods()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>搜索食材<span class="sub">食材库选择</span></div>
 </div>
 <div class="card hidden" id="voice-res" style="border:1.5px solid var(--accent)"><div class="card-t">🎙️ 语音识别</div><div id="voice-txt" style="font-size:14px;margin-bottom:6px"></div><div style="display:flex;gap:6px"><div class="btn btn-p btn-sm" onclick="confirmVoice()">确认</div><div class="btn btn-gh btn-sm" onclick="cancelVoice()">取消</div></div></div>
-<div class="card hidden" id="photo-res" style="border:1.5px solid var(--green)"><div class="card-t">📷 识别</div><div id="photo-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px"></div><div class="fg"><label>食物描述（可语音）<span id="photo-vbtn" style="float:right;cursor:pointer;font-size:16px" onclick="startPhotoVoice()">🎙️</span></label><textarea id="photo-txt" placeholder="如：三文鱼200g、鹅肝吐司1份、冰淇淋4球..." rows="3"></textarea></div><div id="photo-voice-txt" style="font-size:12px;color:var(--accent2);margin-bottom:4px;min-height:16px"></div><div style="display:flex;gap:6px"><div class="btn btn-g btn-sm" onclick="confirmPhoto()">确认添加</div><div class="btn btn-gh btn-sm" onclick="cancelPhoto()">取消</div></div></div>
+<div class="card hidden" id="photo-res" style="border:1.5px solid var(--green)"><div class="card-t">📷 识别</div><div id="photo-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px"></div><div class="fg"><label>食物描述（可语音）<span id="photo-vbtn" style="float:right;cursor:pointer;font-size:16px" onclick="startPhotoVoice()">🎙️</span></label><textarea id="photo-txt" placeholder="如：三文鱼200g、鹅肝吐司1份、冰淇淋4球..." rows="3"></textarea></div><div id="photo-voice-txt" style="font-size:12px;color:var(--accent2);margin-bottom:4px;min-height:16px"></div><div style="margin-bottom:6px"><label style="font-size:12px;color:var(--text3)">店名（外食选填）</label><input id="photo-restaurant" type="text" placeholder="如：杭州悦龙庭日料自助" style="width:100%;padding:6px 8px;border-radius:6px;background:var(--bg3);font-size:13px;margin-top:3px;border:1px solid transparent" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='transparent'"></div><div style="display:flex;gap:6px"><div class="btn btn-g btn-sm" onclick="confirmPhoto()">确认添加</div><div class="btn btn-gh btn-sm" onclick="cancelPhoto()">取消</div></div></div>
 <input class="search" id="d-search" placeholder="🔍 搜索食材..." oninput="filterF()">
 <div class="cats" id="d-cats"></div>
 <div id="d-foods-section"><div class="food-grid" id="d-grid"></div></div>
@@ -737,8 +761,8 @@ function confirmVoice(){const t=document.getElementById('voice-txt').textContent
 function cancelVoice(){document.getElementById('voice-res').classList.add('hidden');}
 function takePhoto(){document.getElementById('cam-input').click();}function uploadPhoto(){document.getElementById('gal-input').click();}
 function handlePhoto(e,s){const files=Array.from(e.target.files);if(!files.length)return;photoFiles=files;const thumbs=document.getElementById('photo-thumbs');thumbs.innerHTML='';files.forEach((f,i)=>{const r=new FileReader();r.onload=ev=>{const img=document.createElement('img');img.src=ev.target.result;img.style.cssText='width:72px;height:72px;object-fit:cover;border-radius:8px;flex-shrink:0;border:2px solid var(--green)';thumbs.appendChild(img);};r.readAsDataURL(f);});document.getElementById('photo-txt').value='';document.getElementById('photo-voice-txt').textContent='';document.getElementById('photo-res').classList.remove('hidden');toast(' 已选'+files.length+'张，请描述食物');e.target.value='';}
-function confirmPhoto(){const t=document.getElementById('photo-txt').value.trim();if(!t){toast('请输入食物');return;}let a=0;t.split(/[、，,；;\n]+/).filter(Boolean).forEach(p=>{const m=p.match(/(.+?)(\d+(?:\.\d+)?)\s*[gG克]/);if(m){const nm=m[1].trim(),g=parseFloat(m[2]),f=S.foods.find(x=>x.n.includes(nm)||nm.includes(x.n));if(f){aM(f,g);a++;}else{const d=tD();d.meals.push({name:nm+'(估)',grams:g,kcal:Math.round(g*1.2),pro:+(g*.1).toFixed(1),fat:+(g*.05).toFixed(1),sfat:0,carbs:+(g*.1).toFixed(1),fiber:0,sugar:0,na:Math.round(g*2),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});rC(d);save();a++;}}});document.getElementById('photo-res').classList.add('hidden');rRc();rNS();rFT();rAs();toast(a?'✅ 已添加'+a+'项':'未识别');}
-function cancelPhoto(){document.getElementById('photo-res').classList.add('hidden');photoFiles=[];}function startPhotoVoice(){if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){toast('不支持语音');return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition,r=new SR();r.lang='zh-CN';r.continuous=false;r.interimResults=true;toast('🎙️ 请描述食物...');r.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;document.getElementById('photo-voice-txt').textContent=t;document.getElementById('photo-txt').value+=(document.getElementById('photo-txt').value?'\n':'')+t;};r.onerror=()=>toast('识别失败');r.start();}
+function confirmPhoto(){const t=document.getElementById('photo-txt').value.trim();if(!t){toast('请输入食物');return;}const restName=document.getElementById('photo-restaurant').value.trim();let a=0;t.split(/[、，,；;\n]+/).filter(Boolean).forEach(p=>{const m=p.match(/(.+?)(\d+(?:\.\d+)?)\s*[gG克]/);if(m){const nm=m[1].trim(),g=parseFloat(m[2]),f=S.foods.find(x=>x.n.includes(nm)||nm.includes(x.n));if(f){aM(f,g);if(restName&&f.cat!=='外食')f.cat='外食';if(restName)f.lastStore=restName;a++;}else{const d=tD();const item={name:nm+'(估)',grams:g,kcal:Math.round(g*1.2),pro:+(g*.1).toFixed(1),fat:+(g*.05).toFixed(1),sfat:0,carbs:+(g*.1).toFixed(1),fiber:0,sugar:0,na:Math.round(g*2),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})};if(restName){item.cat='外食';item.store=restName;}d.meals.push(item);rC(d);save();a++;}}});document.getElementById('photo-res').classList.add('hidden');document.getElementById('photo-restaurant').value='';rRc();rNS();rFT();rAs();toast(a?'✅ 已添加'+a+'项':'未识别');}
+function cancelPhoto(){document.getElementById('photo-res').classList.add('hidden');document.getElementById('photo-txt').value='';document.getElementById('photo-voice-txt').textContent='';var ri=document.getElementById('photo-restaurant');if(ri)ri.value='';photoFiles=[];}function startPhotoVoice(){if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){toast('不支持语音');return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r=new SR();r.lang='zh-CN';r.continuous=false;r.interimResults=true;const txtArea=document.getElementById('photo-txt');const voiceTxt=document.getElementById('photo-voice-txt');const hadBefore=!!txtArea.value;toast('🎙️ 请描述食物...');r.onresult=function(e){let fin='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;}if(fin){voiceTxt.textContent=fin;if(!hadBefore)txtArea.value=fin;else if(txtArea.value.indexOf(fin)<0)txtArea.value+='\n'+fin;}};r.onend=function(){voiceTxt.textContent='';};r.onerror=function(){voiceTxt.textContent='';toast('识别失败');};r.start();}
 function handleWtPhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const img=document.getElementById('wt-photo-preview');img.src=ev.target.result;img.style.display='block';document.getElementById('wt-photo-ocr').textContent='📷 图片已加载（请手动输入体重数值）';};r.readAsDataURL(f);e.target.value='';}
 
 // ═══════ SAVE WEIGHT ═══════
@@ -751,7 +775,7 @@ if(tp==='evening')setTimeout(rAnom,100);
 autoArchive();}
 
 // ═══════ EXERCISE ═══════
-function rEx(){const rc=tEx(),el=document.getElementById('ex-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const dn=rc[i]||false;const d=document.createElement('div');d.className='ex-c';d.innerHTML='<div class="ex-info"><div class="ex-n">'+ex.n+'</div><div class="ex-d">'+ex.d+'</div></div><div class="ex-chk'+(dn?' done':'')+'" onclick="tEx2('+i+')"></div>';el.appendChild(d);});document.getElementById('tm-best').textContent=(tEx().timerBest||0)>0?'最佳：'+tEx().timerBest+'秒':'最佳：--';rCEx();}
+function rEx(){const rc=tEx(),el=document.getElementById('ex-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const dn=rc[i]||false;const d=document.createElement('div');d.className='ex-c';d.style.cursor='pointer';d.onclick=function(e){if(e.target.classList.contains('tm-link'))return;tEx2(i);};d.innerHTML='<div class="ex-info"><div class="ex-n">'+ex.n+'</div><div class="ex-d">'+ex.d+'</div></div><div class="ex-chk'+(dn?' done':'')+'"></div>';el.appendChild(d);});document.getElementById('tm-best').textContent=(tEx().timerBest||0)>0?'最佳：'+tEx().timerBest+'秒':'最佳：--';rCEx();}
 function tEx2(i){const r=tEx();r[i]=!r[i];save();rEx();toast(r[i]?'✅ '+S.exercises[i].n:'已取消');}
 function rCEx(){const el=document.getElementById('ex-custom-list');el.innerHTML='';S.exercises.forEach((ex,i)=>{const d=document.createElement('div');d.className='diet-r';d.innerHTML='<div><div class="dn">'+ex.n+'</div><div class="dd">'+ex.d+'</div></div><span class="del-btn" onclick="dEx('+i+')">×</span>';el.appendChild(d);});}
 function saveExItem(){const n=document.getElementById('ex-n').value.trim(),d=document.getElementById('ex-d').value.trim();if(!n){toast('请输入名称');return;}S.exercises.push({n,d:d||''});save();closeModal('ex-modal');rEx();toast('✅');document.getElementById('ex-n').value='';document.getElementById('ex-d').value='';}
@@ -1006,11 +1030,237 @@ if(pl)pl.innerHTML='<span style="color:#ff6b6b">❌ 加载出错</span><br><span
 }
 })();
 </script>
+
+<!-- FLOATING CHAT -->
+<div id="chat-bubble" onclick="toggleChat()">💬</div>
+<div id="chat-panel">
+<div id="chat-header"><span>💬 快捷指令</span><div id="chat-close" onclick="toggleChat()">✕</div></div>
+<div id="chat-body">
+<div class="chat-msg bot">你好 SAM 👋<br>直接告诉我你要做什么：<br>• 记录饮食：「正餐 鸡胸肉300g 米饭200g」<br>• 记录体重：「体重 58.5」<br>• 运动打卡：「一项完成了」「今天没运动」<br>• 查看状态：「今天吃了什么」「营养够吗」</div>
+</div>
+<div id="chat-input-bar">
+<input id="chat-input" type="text" placeholder="输入指令，如：正餐 三文鱼200g" onkeydown="if(event.key==='Enter')chatSend()">
+<div id="chat-send" onclick="chatSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+</div>
+</div>
 </body>
 </html>
+
+// === FLOATING CHAT ===
+function toggleChat(){
+  var p=document.getElementById('chat-panel'),b=document.getElementById('chat-bubble');
+  if(p.classList.contains('open')){p.classList.remove('open');b.classList.remove('hidden');}
+  else{p.classList.add('open');b.classList.add('hidden');document.getElementById('chat-input').focus();}
+}
+function chatSend(){
+  var inp=document.getElementById('chat-input'),q=inp.value.trim();
+  if(!q)return;inp.value='';
+  addChatMsg('user',q);
+  var result=parseCommand(q);
+  setTimeout(function(){
+    addChatMsg('bot',result.text,result.acts);
+    // Refresh all views
+    if(typeof rH==='function')rH();
+    if(typeof rEx==='function')rEx();
+    if(typeof rRc==='function')rRc();
+    if(typeof rNS==='function')rNS();
+    if(typeof rFT==='function')rFT();
+    if(typeof rAs==='function')rAs();
+  },150);
+}
+function addChatMsg(role,text,acts){
+  var body=document.getElementById('chat-body'),d=document.createElement('div');
+  d.className='chat-msg '+role;
+  var h=text;
+  if(acts&&acts.length){
+    h+='\u003cdiv class="chat-acts"\u003e';
+    acts.forEach(function(a){h+='\u003cdiv class="chat-act-btn" onclick="chatAct(\''+a.cmd.replace(/'/g,"\\'")+'\')"\u003e'+a.label+'\u003c\/div\u003e';});
+    h+='\u003c\/div\u003e';
+  }
+  d.innerHTML=h;body.appendChild(d);body.scrollTop=body.scrollHeight;
+}
+function chatAct(cmd){eval(cmd);}
+
+function parseCommand(q){
+  var ql=q.toLowerCase();
+  var d=tD(),ss=S.settings,tn=d.totalNutrition;
+
+  // ===== WEIGHT =====
+  var wm=q.match(/(?:体重|weight)\s*(\d+\.?\d*)/);
+  if(!wm)wm=q.match(/^(\d+\.\d+)\s*(?:kg|公斤|斤)/);
+  if(wm){
+    var v=parseFloat(wm[1]);
+    if(v\u003e0&&v\u003c200){
+      var dt=TD(),rc=gW(dt);
+      if(!rc){rc={date:dt,morning:null,evening:null,fat:0,muscle:0,bmr:0,visceral:0};S.weightRecords.push(rc);}
+      var now=new Date(),h=now.getHours();
+      if(h\u003c12){rc.morning=v;}else{rc.evening=v;}
+      S.weightRecords.sort(function(a,b){return a.date.localeCompare(b.date);});
+      save();
+      var period=h\u003c12?'晨起':'睡前';
+      var recent=S.weightRecords.slice(-3).map(function(w){return (w.morning||w.evening||'-')+'kg';}).join(' → ');
+      return{text:'✅ '+period+'体重 \u003cb\u003e'+v+'\u003c\/b\u003ekg 已记录\u003cbr\u003e近3天：'+recent};
+    }
+  }
+
+  // ===== EXERCISE =====
+  var exDone=q.match(/([一二三1-3])\s*项?\s*(?:完成|做了|打卡|✓|✅|done)/i);
+  var exCancel=q.match(/([一二三1-3])\s*项?\s*(?:没做|取消|不做|去掉|✗|❌|cancel)/i);
+  var exAllCancel=q.match(/(?:今天)?(?:没运动|全部取消|都没做|全部取消)/);
+  if(exAllCancel){
+    var rc2=tEx();rc2[0]=false;rc2[1]=false;rc2[2]=false;save();
+    return{text:'✅ 已取消今日所有运动打卡'};
+  }
+  if(exCancel){
+    var idx={'一':0,'二':1,'三':2,'1':0,'2':1,'3':2}[exCancel[1]];
+    var rc3=tEx();rc3[idx]=false;save();
+    return{text:'✅ 已取消「'+S.exercises[idx].n+'」'};
+  }
+  if(exDone){
+    var idx2={'一':0,'二':1,'三':2,'1':0,'2':1,'3':2}[exDone[1]];
+    var rc4=tEx();rc4[idx2]=true;save();
+    return{text:'✅ 「'+S.exercises[idx2].n+'」已完成'};
+  }
+
+  // ===== DIET =====
+  var mealMatch=q.match(/^(早餐|午餐|晚餐|正餐|加餐|早饭|午饭|晚饭|上午|下午|晚上|夜宵|中餐)?[\s：:]*([\s\S]+)$/);
+  if(mealMatch&&mealMatch[2].length\u003e1){
+    var mealLabel=mealMatch[1]||'正餐';
+    if(mealLabel==='早饭')mealLabel='早餐';
+    if(mealLabel==='午饭'||mealLabel==='中餐')mealLabel='午餐';
+    if(mealLabel==='晚饭')mealLabel='晚餐';
+    var foodStr=mealMatch[2].trim();
+    var items=foodStr.split(/[、，,；;\n]+/).filter(Boolean);
+    var added=[],notFound=[],acts=[];
+    items.forEach(function(item){
+      item=item.trim();if(!item)return;
+      var m=item.match(/(.+?)(\d+(?:\.\d+)?)\s*[gG克]/);
+      if(!m){m=item.match(/(.+?)(\d+(?:\.\d+)?)\s*(?:ml|毫升|毫升)/);if(m)m[2]=m[2];}
+      if(!m){var m2=item.match(/(.+?)(\d+)\s*[个份杯碗块片条根]/);if(m2){m=[m2[0],m2[1],parseFloat(m2[2])*50,'g'];}}
+      if(m){
+        var nm=m[1].trim(),g=parseFloat(m[2]);
+        var food=S.foods.find(function(f){return f.n.includes(nm)||nm.includes(f.n);});
+        if(food){
+          var storeName='';
+          var sm=q.match(/(?:店|来自|在|从)\s*([^\s，,、]+?)(?:\s|$|的)/);
+          if(sm)storeName=sm[1];
+          var r=g/(food.base||100);
+          d.meals.push({name:food.n+(storeName?' ('+storeName+')':''),grams:g,
+            kcal:+(food.kcal*r).toFixed(1),pro:+(food.pro*r).toFixed(1),
+            fat:+((food.fat||0)*r).toFixed(1),sfat:+((food.sfat||0)*r).toFixed(1),
+            carbs:+((food.carbs||0)*r).toFixed(1),fiber:+((food.fiber||0)*r).toFixed(1),
+            sugar:+((food.sugar||0)*r).toFixed(1),na:+((food.na||0)*r).toFixed(0),
+            time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+          rC(d);save();added.push(food.n+' '+g+'g');
+        }else{notFound.push(item);}
+      }else{notFound.push(item);}
+    });
+    rRc(d);rNS();rFT();rAs();
+    var txt='';
+    if(added.length)txt+='✅ 已添加('+mealLabel+')：'+added.join('、');
+    if(notFound.length)txt+='\u003cbr\u003e⚠️ 未匹配：'+notFound.join('、')+'\u003cbr\u003e请补充格式如「食物名 200g」';
+    // Add nutrition summary
+    var tk=Math.round(tn.kcal),tp=Math.round(tn.pro),ts=Math.round(tn.sfat);
+    txt+='\u003cbr\u003e\u003cbr\u003e📊 今日累计：\u003cb\u003e'+tk+'\u003c\/b\u003ekcal | 蛋白\u003cb\u003e'+tp+'\u003c\/b\u003eg | 饱和脂肪\u003cb\u003e'+ts+'\u003c\/b\u003eg';
+    var calL=ss.calMax-tn.kcal,proL=ss.proMin-tn.pro;
+    if(calL>0)txt+='\u003cbr\u003e热量还剩 '+Math.round(calL)+'kcal';
+    if(proL>0)txt+='，蛋白还差 '+Math.round(proL)+'g';
+    return{text:txt};
+  }
+
+  // ===== QUERY =====
+  if(ql.includes('今天')&&(ql.includes('吃')||ql.includes('饮食')||ql.includes('摄入'))){
+    if(d.meals.length===0)return{text:'📋 今天还没有饮食记录'}
+    var lines=['📋 今日饮食记录：'];
+    d.meals.forEach(function(m){lines.push('• '+m.name+' '+m.grams+'g ('+Math.round(m.kcal)+'kcal)');});
+    lines.push('\u003cbr\u003e📊 总计：\u003cb\u003e'+Math.round(tn.kcal)+'\u003c\/b\u003ekcal | 蛋白\u003cb\u003e'+Math.round(tn.pro)+'\u003c\/b\u003eg | 饱和脂肪\u003cb\u003e'+Math.round(tn.sfat)+'\u003c\/b\u003eg');
+    return{text:lines.join('\u003cbr\u003e')};
+  }
+  if(ql.includes('营养')&&(ql.includes('够')||ql.includes('缺')||ql.includes('差')||ql.includes('状态'))){
+    var cl2=ss.calMax-tn.kcal,pl2=ss.proMin-tn.pro,sf2=ss.fatMax-tn.sfat,fl2=ss.fiberMin-tn.fiber;
+    var lines2=['📊 营养状态：'];
+    lines2.push('🔥 热量：'+(cl2>0?'还剩':'超标')+'\u003cb\u003e'+Math.round(Math.abs(cl2))+'\u003c\/b\u003ekcal');
+    lines2.push('💪 蛋白：'+(pl2>0?'还差':'已超')+'\u003cb\u003e'+Math.round(Math.abs(pl2))+'\u003c\/b\u003eg');
+    lines2.push('🧈 饱和脂肪：'+(sf2>0?'还剩':'超标')+'\u003cb\u003e'+Math.round(Math.abs(sf2))+'\u003c\/b\u003eg');
+    lines2.push('🥬 纤维：'+(fl2>0?'还差':'已超')+'\u003cb\u003e'+Math.round(Math.abs(fl2))+'\u003c\/b\u003eg');
+    if(cl2<0)lines2.push('\u003cbr\u003e⚠️ 热量超标！注意控制');
+    if(sf2<0)lines2.push('⚠️ 饱和脂肪超标，注意减少高脂食物');
+    return{text:lines2.join('\u003cbr\u003e')};
+  }
+  if(ql.includes('还能吃')||ql.includes('剩余')||ql.includes('热量余')){
+    var cl3=ss.calMax-tn.kcal,pl3=ss.proMin-tn.pro,sf3=ss.fatMax-tn.sfat;
+    return{text:'📊 今日余量：\u003cbr\u003e🔥 热量：还剩\u003cb\u003e'+Math.round(cl3)+'\u003c\/b\u003ekcal\u003cbr\u003e💪 蛋白：还差\u003cb\u003e'+Math.round(Math.max(pl3,0))+'\u003c\/b\u003eg\u003cbr\u003e🧈 饱和脂肪：剩\u003cb\u003e'+Math.round(sf3)+'\u003c\/b\u003eg'};
+  }
+  if(ql.includes('体重')&&(ql.includes('趋势')||ql.includes('记录')||ql.includes('查看')||ql.includes('多少'))){
+    var wr=S.weightRecords.slice(-7);
+    if(wr.length===0)return{text:'📋 暂无体重记录'};
+    var lines3=['📋 近期体重记录：'];
+    wr.forEach(function(w){
+      var m=w.morning?w.morning+'kg':'-';
+      var e=w.evening?w.evening+'kg':'-';
+      lines3.push('• '+w.date+'：晨起'+m+' / 睡前'+e);
+    });
+    return{text:lines3.join('\u003cbr\u003e')};
+  }
+  if(ql.includes('运动')&&(ql.includes('状态')||ql.includes('完成')||ql.includes('今天'))){
+    var rc5=tEx(),lines4=['📋 今日运动：'];
+    S.exercises.forEach(function(ex,i){lines4.push((rc5[i]?'✅':'⬜')+' '+ex.n);});
+    return{text:lines4.join('\u003cbr\u003e')};
+  }
+  if(ql.includes('总结')||ql.includes('日报')||ql.includes('今天怎么样')){
+    var lines5=['📋 今日总结：'];
+    // Weight
+    var wr2=gW(TD());
+    if(wr2){
+      var wv=wr2.morning||wr2.evening;
+      if(wv)lines5.push('⚖️ 体重：'+wv+'kg');
+    }
+    // Diet
+    lines5.push('🔥 热量：'+Math.round(tn.kcal)+'/'+ss.calMax+'kcal');
+    lines5.push('💪 蛋白：'+Math.round(tn.pro)+'/'+ss.proMin+'g');
+    lines5.push('🧈 饱和脂肪：'+Math.round(tn.sfat)+'/'+ss.fatMax+'g');
+    lines5.push('🥬 纤维：'+Math.round(tn.fiber)+'/'+ss.fiberMin+'g');
+    // Exercise
+    var rc6=tEx();
+    S.exercises.forEach(function(ex,i){lines5.push((rc6[i]?'✅':'⬜')+' '+ex.n);});
+    return{text:lines5.join('\u003cbr\u003e')};
+  }
+
+  // ===== HELP =====
+  if(ql.includes('帮助')||ql.includes('怎么用')||ql.includes('help')){
+    return{text:'💡 快捷指令示例：\u003cbr\u003e• 「早餐 燕麦200g 牛奶250g」\u003cbr\u003e• 「正餐 鸡胸肉300g 米饭200g」\u003cbr\u003e• 「加餐 苹果200g」\u003cbr\u003e• 「体重 58.5」\u003cbr\u003e• 「一项完成了」「二项没做」\u003cbr\u003e• 「今天吃了什么」\u003cbr\u003e• 「营养够吗」\u003cbr\u003e• 「今天总结」\u003cbr\u003e• 「体重趋势」'};
+  }
+
+  // Fallback: try to parse as food items without meal prefix
+  var autoItems=q.split(/[、，,；;\n]+/).filter(Boolean);
+  var hasFood=false,autoAdded=[],autoNotFound=[];
+  autoItems.forEach(function(item){
+    item=item.trim();if(!item)return;
+    var m=item.match(/(.+?)(\d+(?:\.\d+)?)\s*[gG克]/);
+    if(m){
+      var nm=m[1].trim(),g=parseFloat(m[2]);
+      var food=S.foods.find(function(f){return f.n.includes(nm)||nm.includes(f.n);});
+      if(food){
+        var r=g/(food.base||100);
+        d.meals.push({name:food.n,grams:g,kcal:+(food.kcal*r).toFixed(1),pro:+(food.pro*r).toFixed(1),fat:+((food.fat||0)*r).toFixed(1),sfat:+((food.sfat||0)*r).toFixed(1),carbs:+((food.carbs||0)*r).toFixed(1),fiber:+((food.fiber||0)*r).toFixed(1),sugar:+((food.sugar||0)*r).toFixed(1),na:+((food.na||0)*r).toFixed(0),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+        rC(d);save();autoAdded.push(food.n+' '+g+'g');hasFood=true;
+      }else{autoNotFound.push(item);}
+    }
+  });
+  if(hasFood){
+    rRc(d);rNS();rFT();rAs();
+    var txt2='✅ 已添加：'+autoAdded.join('、');
+    if(autoNotFound.length)txt2+='\u003cbr\u003e⚠️ 未匹配：'+autoNotFound.join('、');
+    txt2+='\u003cbr\u003e\u003cbr\u003e📊 今日累计：\u003cb\u003e'+Math.round(tn.kcal)+'\u003c\/b\u003ekcal | 蛋白\u003cb\u003e'+Math.round(tn.pro)+'\u003c\/b\u003eg';
+    return{text:txt2};
+  }
+
+  return{text:'🤔 没理解，试试：\u003cbr\u003e• 「正餐 鸡胸肉300g 米饭200g」\u003cbr\u003e• 「体重 58.5」\u003cbr\u003e• 「今天吃了什么」\u003cbr\u003e• 「营养够吗」\u003cbr\u003e• 输入「帮助」查看更多'};
+}
+
 // === AUTO UPDATE: Check for new version on each open ===
 (function(){
-  const APP_VERSION = 6; // bump this after each GitHub push
+  const APP_VERSION = 7; // bump this after each GitHub push
   const VKEY = 'nv_ver';
   const oldVer = parseInt(localStorage.getItem(VKEY)) || 0;
   if (oldVer > 0 && oldVer < APP_VERSION) {
