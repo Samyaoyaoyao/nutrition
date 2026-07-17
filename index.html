@@ -208,7 +208,7 @@ button{cursor:pointer}
 <div class="input-btn" onclick="document.getElementById('d-search').focus();scrollToFoods()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>搜索食材<span class="sub">食材库选择</span></div>
 </div>
 <div class="card hidden" id="voice-res" style="border:1.5px solid var(--accent)"><div class="card-t">🎙️ 语音识别</div><div id="voice-txt" style="font-size:14px;margin-bottom:6px"></div><div style="display:flex;gap:6px"><div class="btn btn-p btn-sm" onclick="confirmVoice()">确认</div><div class="btn btn-gh btn-sm" onclick="cancelVoice()">取消</div></div></div>
-<div class="card hidden" id="photo-res" style="border:1.5px solid var(--green)"><div class="card-t">📷 识别</div><img id="photo-img" class="photo-preview" style="display:none"><div class="fg"><label>识别到的食物</label><textarea id="photo-txt" placeholder="如：鸡胸肉150g、西兰花100g..."></textarea></div><div style="display:flex;gap:6px"><div class="btn btn-g btn-sm" onclick="confirmPhoto()">确认</div><div class="btn btn-gh btn-sm" onclick="cancelPhoto()">取消</div></div></div>
+<div class="card hidden" id="photo-res" style="border:1.5px solid var(--green)"><div class="card-t">📷 识别</div><div id="photo-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px"></div><div class="fg"><label>食物描述（可语音）<span id="photo-vbtn" style="float:right;cursor:pointer;font-size:16px" onclick="startPhotoVoice()">🎙️</span></label><textarea id="photo-txt" placeholder="如：三文鱼200g、鹅肝吐司1份、冰淇淋4球..." rows="3"></textarea></div><div id="photo-voice-txt" style="font-size:12px;color:var(--accent2);margin-bottom:4px;min-height:16px"></div><div style="display:flex;gap:6px"><div class="btn btn-g btn-sm" onclick="confirmPhoto()">确认添加</div><div class="btn btn-gh btn-sm" onclick="cancelPhoto()">取消</div></div></div>
 <input class="search" id="d-search" placeholder="🔍 搜索食材..." oninput="filterF()">
 <div class="cats" id="d-cats"></div>
 <div id="d-foods-section"><div class="food-grid" id="d-grid"></div></div>
@@ -315,8 +315,8 @@ button{cursor:pointer}
 
 <div class="modal-bg" id="rpt-detail-modal" onclick="closeModalBg(event)"><div class="modal" onclick="event.stopPropagation()"><div class="modal-t" id="rpt-detail-title">报告详情</div><div id="rpt-detail-content"></div><div style="text-align:center;margin-top:12px"><div class="btn btn-gh" onclick="closeModal('rpt-detail-modal')">关闭</div></div></div></div>
 
-<input type="file" accept="image/*" capture="environment" id="cam-input" style="display:none" onchange="handlePhoto(event,'camera')">
-<input type="file" accept="image/*" id="gal-input" style="display:none" onchange="handlePhoto(event,'gallery')">
+<input type="file" accept="image/*" capture="environment" id="cam-input" style="display:none" onchange="handlePhoto(event,'camera')" multiple>
+<input type="file" accept="image/*" id="gal-input" style="display:none" onchange="handlePhoto(event,'gallery')" multiple>
 <div class="ev-pop-bg" id="ev-pop-bg" onclick="closeEvPop()"></div>
 <div class="ev-pop" id="ev-pop"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700" id="ev-pop-title">事件</div><div style="font-size:20px;cursor:pointer;color:var(--text3)" onclick="closeEvPop()">✕</div></div><div id="ev-pop-content"></div></div>
 
@@ -601,7 +601,7 @@ const AR=[
 
 // ═══════ STATE ═══════
 const TD=()=>new Date().toISOString().slice(0,10);
-let S=load(),curCat='全部',fdbCat='全部',selFood=null,tmInt=null,tmSec=0,tmRun=false,calMo=new Date(),wtChart=null,trendChart=null,curRptTab='daily',curDataTab='wt';
+let S=load(),curCat='全部',fdbCat='全部',selFood=null,tmInt=null,tmSec=0,tmRun=false,calMo=new Date(),photoFiles=[],wtChart=null,trendChart=null,curRptTab='daily',curDataTab='wt';
 
 function load(){
 try{const s=JSON.parse(localStorage.getItem('sam_v3')||'{}');
@@ -638,6 +638,7 @@ S.weightRecords.slice(-3).reverse().forEach(r=>{rh+='<div style="display:flex;ju
 document.getElementById('wm-recent').innerHTML=rh;}}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function closeModalBg(e){if(e.target===e.currentTarget)e.target.classList.remove('open');}
+function closeEvPop(){document.getElementById('ev-pop-bg').classList.remove('open');document.getElementById('ev-pop').classList.remove('open');}
 
 // ═══════ HOME ═══════
 function rH(){
@@ -735,9 +736,9 @@ function startVoice(){if(!('webkitSpeechRecognition'in window)&&!('SpeechRecogni
 function confirmVoice(){const t=document.getElementById('voice-txt').textContent;let m=null;S.foods.forEach(f=>{if(t.includes(f.n))m=f;});if(m){oG(m);toast('识别到：'+m.n);}else toast('未识别到食材');document.getElementById('voice-res').classList.add('hidden');}
 function cancelVoice(){document.getElementById('voice-res').classList.add('hidden');}
 function takePhoto(){document.getElementById('cam-input').click();}function uploadPhoto(){document.getElementById('gal-input').click();}
-function handlePhoto(e,s){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{document.getElementById('photo-img').src=ev.target.result;document.getElementById('photo-img').style.display='block';document.getElementById('photo-txt').value='';document.getElementById('photo-res').classList.remove('hidden');toast('📷 请输入食物');};r.readAsDataURL(f);e.target.value='';}
+function handlePhoto(e,s){const files=Array.from(e.target.files);if(!files.length)return;photoFiles=files;const thumbs=document.getElementById('photo-thumbs');thumbs.innerHTML='';files.forEach((f,i)=>{const r=new FileReader();r.onload=ev=>{const img=document.createElement('img');img.src=ev.target.result;img.style.cssText='width:72px;height:72px;object-fit:cover;border-radius:8px;flex-shrink:0;border:2px solid var(--green)';thumbs.appendChild(img);};r.readAsDataURL(f);});document.getElementById('photo-txt').value='';document.getElementById('photo-voice-txt').textContent='';document.getElementById('photo-res').classList.remove('hidden');toast(' 已选'+files.length+'张，请描述食物');e.target.value='';}
 function confirmPhoto(){const t=document.getElementById('photo-txt').value.trim();if(!t){toast('请输入食物');return;}let a=0;t.split(/[、，,；;\n]+/).filter(Boolean).forEach(p=>{const m=p.match(/(.+?)(\d+(?:\.\d+)?)\s*[gG克]/);if(m){const nm=m[1].trim(),g=parseFloat(m[2]),f=S.foods.find(x=>x.n.includes(nm)||nm.includes(x.n));if(f){aM(f,g);a++;}else{const d=tD();d.meals.push({name:nm+'(估)',grams:g,kcal:Math.round(g*1.2),pro:+(g*.1).toFixed(1),fat:+(g*.05).toFixed(1),sfat:0,carbs:+(g*.1).toFixed(1),fiber:0,sugar:0,na:Math.round(g*2),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});rC(d);save();a++;}}});document.getElementById('photo-res').classList.add('hidden');rRc();rNS();rFT();rAs();toast(a?'✅ 已添加'+a+'项':'未识别');}
-function cancelPhoto(){document.getElementById('photo-res').classList.add('hidden');}
+function cancelPhoto(){document.getElementById('photo-res').classList.add('hidden');photoFiles=[];}function startPhotoVoice(){if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){toast('不支持语音');return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition,r=new SR();r.lang='zh-CN';r.continuous=false;r.interimResults=true;toast('🎙️ 请描述食物...');r.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;document.getElementById('photo-voice-txt').textContent=t;document.getElementById('photo-txt').value+=(document.getElementById('photo-txt').value?'\n':'')+t;};r.onerror=()=>toast('识别失败');r.start();}
 function handleWtPhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const img=document.getElementById('wt-photo-preview');img.src=ev.target.result;img.style.display='block';document.getElementById('wt-photo-ocr').textContent='📷 图片已加载（请手动输入体重数值）';};r.readAsDataURL(f);e.target.value='';}
 
 // ═══════ SAVE WEIGHT ═══════
