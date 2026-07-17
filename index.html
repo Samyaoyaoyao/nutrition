@@ -1036,10 +1036,11 @@ if(pl)pl.innerHTML='<span style="color:#ff6b6b">❌ 加载出错</span><br><span
 <div id="chat-panel">
 <div id="chat-header"><span>💬 快捷指令</span><div id="chat-close" onclick="toggleChat()">✕</div></div>
 <div id="chat-body">
-<div class="chat-msg bot">你好 SAM 👋<br>直接告诉我你要做什么：<br>• 记录饮食：「正餐 鸡胸肉300g 米饭200g」<br>• 记录体重：「体重 58.5」<br>• 运动打卡：「一项完成了」「今天没运动」<br>• 查看状态：「今天吃了什么」「营养够吗」</div>
+<div class="chat-msg bot">你好 SAM 👋<br>📷 <b>最佳用法</b>：拍照发给我 → 我识别食物 → 复制结果粘贴到这里<br>或直接输入指令：<br>• 「正餐 鸡胸肉300g 米饭200g」<br>• 「体重 58.5」<br>• 「一项完成」「今天没运动」<br>• 「今天吃了什么」「营养够吗」</div>
 </div>
 <div id="chat-input-bar">
-<input id="chat-input" type="text" placeholder="输入指令，如：正餐 三文鱼200g" onkeydown="if(event.key==='Enter')chatSend()">
+<div id="chat-paste" onclick="chatPaste()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px" title="粘贴识别结果">📋</div>
+<input id="chat-input" type="text" placeholder="输入指令或粘贴识别结果" onkeydown="if(event.key==='Enter')chatSend()">
 <div id="chat-send" onclick="chatSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
 </div>
 </div>
@@ -1080,6 +1081,8 @@ function addChatMsg(role,text,acts){
   d.innerHTML=h;body.appendChild(d);body.scrollTop=body.scrollHeight;
 }
 function chatAct(cmd){eval(cmd);}
+
+function chatPaste(){if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){if(t){document.getElementById('chat-input').value=t.trim();chatSend();}}).catch(function(){toast('粘贴失败，请手动输入');});}else{toast('浏览器不支持自动粘贴');}}
 
 function parseCommand(q){
   var ql=q.toLowerCase();
@@ -1152,7 +1155,12 @@ function parseCommand(q){
             sugar:+((food.sugar||0)*r).toFixed(1),na:+((food.na||0)*r).toFixed(0),
             time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
           rC(d);save();added.push(food.n+' '+g+'g');
-        }else{notFound.push(item);}
+        }else{
+          // Auto-create estimated entry for unknown foods
+          var eg=Math.max(g,50);
+          d.meals.push({name:nm+'(估)',grams:eg,kcal:Math.round(eg*1.2),pro:+(eg*.1).toFixed(1),fat:+(eg*.05).toFixed(1),sfat:0,carbs:+(eg*.1).toFixed(1),fiber:0,sugar:0,na:Math.round(eg*2),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+          rC(d);save();added.push(nm+' '+eg+'g(估)');
+        }
       }else{notFound.push(item);}
     });
     rRc(d);rNS();rFT();rAs();
@@ -1260,7 +1268,7 @@ function parseCommand(q){
 
 // === AUTO UPDATE: Check for new version on each open ===
 (function(){
-  const APP_VERSION = 7; // bump this after each GitHub push
+  const APP_VERSION = 8; // bump this after each GitHub push
   const VKEY = 'nv_ver';
   const oldVer = parseInt(localStorage.getItem(VKEY)) || 0;
   if (oldVer > 0 && oldVer < APP_VERSION) {
