@@ -381,9 +381,23 @@ const APP_VERSION = 10;
     var json=decodeURIComponent(escape(atob(encoded)));
     var items=JSON.parse(json);
     var d=tD();
-    if(items.meals&&items.meals.length){
-      items.meals.forEach(function(m){
-        d.meals.push(m);
+    if(items.items&&items.items.length){
+      items.items.forEach(function(m){
+        var item={
+          name:m.name||'',
+          grams:parseFloat(m.grams)||parseFloat(m.amount)||100,
+          kcal:Math.round(m.kcal||0),
+          pro:+(m.pro||0).toFixed(1),
+          fat:+(m.fat||0).toFixed(1),
+          sfat:+(m.sfat||m.sat_fat||0).toFixed(1),
+          carbs:+(m.carbs||0).toFixed(1),
+          fiber:+(m.fiber||0).toFixed(1),
+          sugar:+(m.sugar||0).toFixed(1),
+          na:Math.round(m.na||m.sodium||0),
+          time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})
+        };
+        if(m.restaurant)item.store=m.restaurant;
+        d.meals.push(item);
       });
       rC(d);save();
     }
@@ -393,7 +407,7 @@ const APP_VERSION = 10;
     setTimeout(function(){
       var tk=Math.round(d.totalNutrition.kcal);
       var tp=Math.round(d.totalNutrition.pro);
-      toast('\u2705 \u5df2\u5bfc\u5165'+items.meals.length+'\u9879\uff0c'+tk+'kcal');
+      toast('\u2705 \u5df2\u5bfc\u5165'+items.items.length+'\u9879\uff0c'+tk+'kcal');
     },500);
     // Refresh all views
     setTimeout(function(){rH();rEx();rRc();rNS();rFT();rAs();nav('home');},800);
