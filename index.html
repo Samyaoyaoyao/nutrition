@@ -6,8 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0f0f14">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>SAM v3 营养监测</title>
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU0FNIHYzIiwiInNob3J0X25hbWUiOiJTQU0gdjMiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBmMGYxNCIsInRoZW1lX2NvbG9yIjoiIzBmMGYxNCJ9">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU0FNIHYzIiwic2hvcnRfbmFtZSI6IlNBTSB2MyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMGYwZjE0IiwidGhlbWVfY29sb3IiOiIjMGYwZjE0In0=">
 <style>
 :root{--bg:#0d0d12;--bg2:#161620;--bg3:#1f1f30;--card:#1b1b2c;--card2:#232340;--text:#eaeaf2;--text2:#9898b0;--text3:#5e5e78;--accent:#6c5ce7;--accent2:#a29bfe;--green:#00cec9;--green2:#55efc4;--orange:#fdcb6e;--red:#ff6b6b;--pink:#fd79a8;--blue:#74b9ff;--shadow:0 2px 20px rgba(0,0,0,.5);--radius:16px;--radius-sm:10px;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
 [data-theme="light"]{--bg:#f2f2f8;--bg2:#fff;--bg3:#e6e6f0;--card:#fff;--card2:#f6f6fc;--text:#1a1a2e;--text2:#555570;--text3:#8888a0;--shadow:0 2px 16px rgba(0,0,0,.08)}
@@ -178,6 +181,7 @@ button{cursor:pointer}
 <\/style>
 </head>
 <body data-theme="dark">
+<div id="pre-load" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#a29bfe;font-size:16px;font-weight:700;z-index:99999;text-align:center">⏳ 加载中...<br><span style="font-size:11px;color:#9898b0;font-weight:400">如长时间无响应请刷新页面</span></div>
 <div class="toast" id="toast"></div>
 
 <!-- HOME -->
@@ -984,16 +988,21 @@ if(rem>=0&&rem<=1&&!S.notifLog[td][e.t]){new Notification('SAM 提醒',{body:e.m
 // ═══════ UTILS ═══════
 function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
 
-// ═══════ SERVICE WORKER ═══════
-if('serviceWorker'in navigator){const sw=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>new Response('Offline')));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}
+// ═══════ SERVICE WORKER CLEANUP ═══════
+if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});}
 
 // ═══════ INIT ═══════
 (function(){
+try{
+var pl=document.getElementById('pre-load');if(pl)pl.style.display='none';
 if(S.settings.theme==='light')document.body.setAttribute('data-theme','light');
 rH();
 setInterval(()=>{if(document.getElementById('pg-home').classList.contains('active'))rH();},60000);
-// Reminder check every minute
 setInterval(checkReminders,60000);
+}catch(err){
+var pl=document.getElementById('pre-load');
+if(pl)pl.innerHTML='<span style="color:#ff6b6b">❌ 加载出错</span><br><span style="font-size:11px;color:#9898b0">'+err.message+'<br>行号:'+(err.lineNumber||'未知')+'</span>';
+}
 })();
 </script>
 </body>
