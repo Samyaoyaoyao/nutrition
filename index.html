@@ -1124,14 +1124,14 @@ function parseCommand(q){
   if(!wm)wm=q.match(/^(\d+\.\d+)\s*(?:kg|公斤|斤)/);
   if(wm){
     var v=parseFloat(wm[1]);
-    if(v\u003e0&&v\u003c200){
+    if(v>0&&v<200){
       var dt=TD(),rc=gW(dt);
       if(!rc){rc={date:dt,morning:null,evening:null,fat:0,muscle:0,bmr:0,visceral:0};S.weightRecords.push(rc);}
       var now=new Date(),h=now.getHours();
-      if(h\u003c12){rc.morning=v;}else{rc.evening=v;}
+      if(h<12){rc.morning=v;}else{rc.evening=v;}
       S.weightRecords.sort(function(a,b){return a.date.localeCompare(b.date);});
       save();
-      var period=h\u003c12?'晨起':'睡前';
+      var period=h<12?'晨起':'睡前';
       var recent=S.weightRecords.slice(-3).map(function(w){return (w.morning||w.evening||'-')+'kg';}).join(' → ');
       return{text:'✅ '+period+'体重 \u003cb\u003e'+v+'\u003c\/b\u003ekg 已记录\u003cbr\u003e近3天：'+recent};
     }
@@ -1158,7 +1158,7 @@ function parseCommand(q){
 
   // ===== DIET =====
   var mealMatch=q.match(/^(早餐|午餐|晚餐|正餐|加餐|早饭|午饭|晚饭|上午|下午|晚上|夜宵|中餐)?[\s：:]*([\s\S]+)$/);
-  if(mealMatch&&mealMatch[2].length\u003e1){
+  if(mealMatch&&mealMatch[2].length>1){
     var mealLabel=mealMatch[1]||'正餐';
     if(mealLabel==='早饭')mealLabel='早餐';
     if(mealLabel==='午饭'||mealLabel==='中餐')mealLabel='午餐';
