@@ -336,6 +336,10 @@ body.light{
 .badge-low{background:var(--warning-soft);color:var(--warning)}
 .badge-high{background:var(--danger-soft);color:var(--danger)}
 .badge-info{background:var(--info-soft);color:var(--info)}
+.mini-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500;vertical-align:middle}
+.mini-tag.tag-green{background:rgba(74,222,128,.15);color:#4ade80}
+.mini-tag.tag-yellow{background:rgba(251,191,36,.15);color:#fbbf24}
+.mini-tag.tag-red{background:rgba(248,113,113,.15);color:#f87171}
 
 /* ===== 数字步进 ===== */
 .stepper{display:flex;align-items:center;background:var(--bg-card-2);border-radius:var(--radius);overflow:hidden}
@@ -1160,6 +1164,12 @@ function getDefaultFoods() {
     { n: '东北大板巧克力冰棍', cat: '零食甜品', base: 90, kcal: 170, pro: 1.5, fat: 9, sfat: 4, carbs: 22, fiber: 0.5, sugar: 18, na: 50, note: '⚠️饱和脂肪高，浅尝' },
     { n: '八喜巧克力脆皮冰淇淋', cat: '零食甜品', base: 70, kcal: 210, pro: 3, fat: 14, sfat: 9, carbs: 20, fiber: 0.3, sugar: 16, na: 80, note: '⚠️饱和脂肪极高' },
     { n: '麦当劳圆筒甜筒', cat: '零食甜品', base: 92, kcal: 145, pro: 3.7, fat: 3.8, sfat: 2.2, carbs: 23, fiber: 0, sugar: 18, na: 55, note: '零食备选' },
+    { n: '麦辣鸡腿汉堡', cat: '肉蛋水产', base: 185, kcal: 570, pro: 25, fat: 32, sfat: 5.5, carbs: 45, fiber: 2, sugar: 8, na: 1100, note: '麦当劳·⚠️高钠' },
+    { n: '麦辣鸡翅', cat: '肉蛋水产', base: 40, kcal: 150, pro: 8, fat: 10, sfat: 2, carbs: 8, fiber: 0, sugar: 1, na: 350, note: '麦当劳·1对2块约80g' },
+    { n: '麦辣翅根', cat: '肉蛋水产', base: 35, kcal: 130, pro: 7, fat: 9, sfat: 1.8, carbs: 7, fiber: 0, sugar: 1, na: 300, note: '麦当劳·1个约35g' },
+    { n: '板烧鸡腿堡', cat: '肉蛋水产', base: 195, kcal: 450, pro: 28, fat: 20, sfat: 3.5, carbs: 42, fiber: 2, sugar: 6, na: 950, note: '麦当劳·相对健康' },
+    { n: '麦乐鸡(5块)', cat: '肉蛋水产', base: 85, kcal: 260, pro: 14, fat: 16, sfat: 3, carbs: 16, fiber: 0, sugar: 0, na: 480, note: '麦当劳·5块装' },
+    { n: '瘦猪肉丝(里脊)', cat: '肉蛋水产', base: 100, kcal: 155, pro: 20, fat: 7, sfat: 2.5, carbs: 1, fiber: 0, sugar: 0, na: 55, note: '炒菜常用·低脂肉' },
     { n: '山姆芥末夏威夷果', cat: '零食甜品', base: 30, kcal: 190, pro: 2.5, fat: 19, sfat: 7, carbs: 5, fiber: 2, sugar: 1, na: 80, note: '⚠️少碰，饱和脂肪极高' },
 
     // ===== 饮品 =====
@@ -1954,7 +1964,24 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
   "confidence": 0.9,
   "diet": {
     "meals": [
-      { "name": "食物名称", "grams": 100, "matchedFood": "匹配到的食材库名称，没有则为null" }
+      { 
+        "name": "食物名称", 
+        "grams": 100, 
+        "matchedFood": "匹配到的食材库名称，没有则为null",
+        "isEstimated": false,
+        "estimateConfidence": "high | medium | low",
+        "nutrition": {
+          "kcal": 165,
+          "pro": 20,
+          "fat": 7,
+          "sfat": 2.5,
+          "carbs": 1,
+          "fiber": 0,
+          "sugar": 0,
+          "na": 55
+        },
+        "note": "数据来源备注，如：麦当劳官网营养成分表"
+      }
     ]
   },
   "weight": {
@@ -1978,12 +2005,16 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
 }
 
 规则：
-1. 识别为饮食记录时，从食材库中匹配最接近的食物名
-2. 识别为体重时，判断是晨起还是睡前（根据内容或描述）
-3. 识别为运动打卡时，匹配"第一项/跑步机"=index 0，"第二项/力量"=index 1，"第三项/平板"=index 2
-4. 识别为计划调整时，解析调整动作（改时间/取消/新增）
-5. reply用简洁的中文告知用户识别结果
-6. 不确定的内容设为null，needsConfirmation设为true`;
+1. 识别为饮食记录时，先从食材库中匹配最接近的食物名（matchedFood）
+2. 如果食材库中有匹配的，isEstimated设为false，nutrition可以为空或省略
+3. 如果食材库中没有匹配的，isEstimated设为true，必须返回nutrition完整营养估算值（每100g的营养），并给出estimateConfidence置信度
+4. 置信度判断：连锁餐饮品牌食物(麦当劳/星巴克/肯德基等)=high，常见家常菜/超市包装食品=medium，少见/不确定=low
+5. 营养数据要尽量准确，连锁餐饮优先用官方营养表数据，家常菜按常见做法估算
+6. 识别为体重时，判断是晨起还是睡前（根据内容或描述）
+7. 识别为运动打卡时，匹配"第一项/跑步机"=index 0，"第二项/力量"=index 1，"第三项/平板"=index 2
+8. 识别为计划调整时，解析调整动作（改时间/取消/新增）
+9. reply用简洁的中文告知用户识别结果
+10. 不确定的内容设为null，needsConfirmation设为true`;
 
     // 合并所有文字到一个 text 段
     let fullText = prompt;
@@ -3776,6 +3807,9 @@ async function sendAiInput() {
     // 显示识别结果
     bubble.textContent = parsed.reply || '已识别，请看下方确认';
     
+    // 保存最新AI结果
+    _lastAIResult = parsed;
+    
     // 生成结果卡片
     resultCard.outerHTML = renderSmartResultCard(parsed, images);
     
@@ -3810,8 +3844,26 @@ function renderSmartResultCard(data, images) {
   // 饮食
   if (data.diet && data.diet.meals && data.diet.meals.length) {
     html += '<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-2);font-weight:500">🍽️ 饮食记录：</span>';
-    data.diet.meals.forEach(m => {
-      html += `<div class="result-row"><span class="label">${m.name}${m.matchedFood?` (${m.matchedFood})`:''}</span><span class="value">${m.grams}g</span></div>`;
+    data.diet.meals.forEach((m, i) => {
+      const estimated = m.isEstimated;
+      const conf = m.estimateConfidence;
+      const confLabel = conf === 'high' ? '高置信' : conf === 'medium' ? '中置信' : '低置信';
+      const confClass = conf === 'high' ? 'tag-green' : conf === 'medium' ? 'tag-yellow' : 'tag-red';
+      html += `<div class="result-row">
+        <span class="label">${m.name}${m.matchedFood?` (${m.matchedFood})`:''}
+          ${estimated?`<span class="mini-tag ${confClass}" style="margin-left:4px">AI估算·${confLabel}</span>`:''}
+        </span>
+        <span class="value">${m.grams}g</span>
+      </div>`;
+      if (estimated && m.nutrition) {
+        const n = m.nutrition;
+        const ratio = (m.grams || 100) / 100;
+        html += `<div style="font-size:11px;color:var(--text-3);padding-left:16px;margin-bottom:4px">
+          ≈ ${Math.round(n.kcal*ratio)}kcal · 蛋白${Math.round(n.pro*ratio)}g · 脂${Math.round(n.fat*ratio)}g · 饱和${Math.round(n.sfat*ratio*10)/10}g · 碳${Math.round(n.carbs*ratio)}g · 钠${Math.round(n.na*ratio)}mg
+          ${m.note?`<br>📌 ${m.note}`:''}
+          <br><span style="color:var(--primary);cursor:pointer" onclick="saveEstimatedToFoods(${i})">＋ 加入食材库（永久保存）</span>
+        </div>`;
+      }
     });
     html += '</div>';
   }
@@ -3867,6 +3919,41 @@ function getIntentLabel(intent) {
   return map[intent] || intent;
 }
 
+// 暂存最新AI结果用于加入食材库
+let _lastAIResult = null;
+
+function saveEstimatedToFoods(mealIndex) {
+  if (!_lastAIResult || !_lastAIResult.diet || !_lastAIResult.diet.meals) return;
+  const m = _lastAIResult.diet.meals[mealIndex];
+  if (!m || !m.isEstimated || !m.nutrition) return;
+  
+  const n = m.nutrition;
+  const newFood = {
+    n: m.name,
+    cat: '自定义',
+    base: 100,
+    kcal: n.kcal,
+    pro: n.pro,
+    fat: n.fat,
+    sfat: n.sfat,
+    carbs: n.carbs,
+    fiber: n.fiber || 0,
+    sugar: n.sugar || 0,
+    na: n.na || 0,
+    note: (m.note ? m.note + ' · ' : '') + 'AI估算·' + (m.estimateConfidence || 'medium') + '置信'
+  };
+  
+  S.foods.push(newFood);
+  saveData();
+  toast(`已将「${m.name}」加入食材库`);
+  
+  // 刷新当前卡片，移除加入按钮
+  const card = document.getElementById('result-card');
+  if (card) {
+    card.outerHTML = renderSmartResultCard(_lastAIResult, null);
+  }
+}
+
 function applySmartResult(data) {
   let applied = false;
   
@@ -3877,7 +3964,7 @@ function applySmartResult(data) {
       let food = S.foods.find(f => 
         f.n === m.matchedFood || 
         f.n === m.name ||
-        f.n.includes(m.name.substring(0, 2))
+        (m.name.length >= 2 && f.n.includes(m.name.substring(0, 2)))
       );
       
       if (food) {
@@ -3895,11 +3982,31 @@ function applySmartResult(data) {
           sugar: food.sugar ? Math.round(food.sugar * ratio * 10) / 10 : 0,
           na: food.na ? Math.round(food.na * ratio * 10) / 10 : 0
         });
-      } else {
-        // 未匹配，按大致估算添加
+      } else if (m.isEstimated && m.nutrition) {
+        // AI估算值
+        const n = m.nutrition;
+        const ratio = (m.grams || 100) / 100;
         S.today.meals.push({
           id: Date.now() + Math.random(),
           name: m.name + ' (估算)',
+          grams: m.grams || 100,
+          kcal: Math.round(n.kcal * ratio * 10) / 10,
+          pro: Math.round(n.pro * ratio * 10) / 10,
+          fat: Math.round(n.fat * ratio * 10) / 10,
+          sfat: Math.round(n.sfat * ratio * 10) / 10,
+          carbs: Math.round(n.carbs * ratio * 10) / 10,
+          fiber: n.fiber ? Math.round(n.fiber * ratio * 10) / 10 : 0,
+          sugar: n.sugar ? Math.round(n.sugar * ratio * 10) / 10 : 0,
+          na: n.na ? Math.round(n.na * ratio * 10) / 10 : 0,
+          estimated: true,
+          confidence: m.estimateConfidence,
+          note: m.note || ''
+        });
+      } else {
+        // 完全没数据，最低限度估算
+        S.today.meals.push({
+          id: Date.now() + Math.random(),
+          name: m.name + ' (未识别)',
           grams: m.grams || 100,
           kcal: Math.round((m.grams || 100) * 1.5),
           pro: 0, fat: 0, sfat: 0, carbs: 0, fiber: 0, sugar: 0, na: 0
