@@ -883,7 +883,7 @@ const STORAGE_KEY = 'nutrition-v2-data';
 const AI_API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
 
 // 食材分类
-const FOOD_CATEGORIES = ['全部','蛋白','谷物','蔬菜','水果','零食','饮料','油脂','其他'];
+const FOOD_CATEGORIES = ['全部','主食','肉蛋水产','蔬菜菌菇','水果','零食甜品','饮品','调味品','面包'];
 
 // 核心三项运动
 const CORE_EXERCISES = [
@@ -1003,45 +1003,94 @@ function saveData() {
 // ============================================================
 function getDefaultFoods() {
   return [
-    // 蛋白类
-    { n: '鸡胸肉', cat: '蛋白', base: 100, kcal: 165, pro: 31, fat: 3.6, sfat: 1, carbs: 0, fiber: 0, sugar: 0, na: 74, note: '去皮' },
-    { n: '鸡腿肉', cat: '蛋白', base: 100, kcal: 184, pro: 24, fat: 9.5, sfat: 2.6, carbs: 0, fiber: 0, sugar: 0, na: 82, note: '带皮' },
-    { n: '鸡蛋', cat: '蛋白', base: 100, kcal: 155, pro: 13, fat: 11, sfat: 3.3, carbs: 1.1, fiber: 0, sugar: 1.1, na: 124, note: '全蛋' },
-    { n: '蛋白', cat: '蛋白', base: 100, kcal: 52, pro: 11, fat: 0.2, sfat: 0, carbs: 1.7, fiber: 0, sugar: 1.7, na: 153, note: '鸡蛋清' },
-    { n: '三文鱼', cat: '蛋白', base: 100, kcal: 208, pro: 20, fat: 13, sfat: 3.1, carbs: 0, fiber: 0, sugar: 0, na: 59, note: '大西洋鲑' },
-    { n: '虾仁', cat: '蛋白', base: 100, kcal: 99, pro: 24, fat: 0.3, sfat: 0.1, carbs: 0.2, fiber: 0, sugar: 0, na: 148, note: '去壳' },
-    { n: '牛肉(瘦)', cat: '蛋白', base: 100, kcal: 250, pro: 26, fat: 15, sfat: 5.8, carbs: 0, fiber: 0, sugar: 0, na: 72, note: '牛里脊' },
-    { n: '豆腐', cat: '蛋白', base: 100, kcal: 76, pro: 8, fat: 4.8, sfat: 0.7, carbs: 1.9, fiber: 0.3, sugar: 0.3, na: 7, note: '北豆腐' },
-    { n: '蛋白粉', cat: '蛋白', base: 100, kcal: 370, pro: 75, fat: 5, sfat: 2, carbs: 5, fiber: 2, sugar: 3, na: 300, note: '乳清蛋白' },
-    { n: '希腊酸奶', cat: '蛋白', base: 100, kcal: 59, pro: 10, fat: 0.7, sfat: 0.4, carbs: 3.6, fiber: 0, sugar: 3.6, na: 36, note: '脱脂无糖' },
-    // 谷物类
-    { n: '米饭', cat: '谷物', base: 100, kcal: 116, pro: 2.6, fat: 0.3, sfat: 0.1, carbs: 25.6, fiber: 0.3, sugar: 0, na: 2, note: '白米饭' },
-    { n: '糙米', cat: '谷物', base: 100, kcal: 111, pro: 2.6, fat: 0.9, sfat: 0.2, carbs: 22.8, fiber: 1.8, sugar: 0.3, na: 5, note: '煮熟' },
-    { n: '燕麦', cat: '谷物', base: 100, kcal: 389, pro: 16.9, fat: 6.9, sfat: 1.2, carbs: 66.3, fiber: 10.6, sugar: 0, na: 2, note: '纯燕麦片' },
-    { n: '全麦面包', cat: '谷物', base: 100, kcal: 247, pro: 13, fat: 3.4, sfat: 0.6, carbs: 41, fiber: 7, sugar: 5, na: 400, note: '100%全麦' },
-    { n: '红薯', cat: '谷物', base: 100, kcal: 86, pro: 1.6, fat: 0.1, sfat: 0, carbs: 20.1, fiber: 3, sugar: 4.2, na: 55, note: '蒸' },
-    { n: '玉米', cat: '谷物', base: 100, kcal: 96, pro: 3.4, fat: 1.5, sfat: 0.2, carbs: 19, fiber: 2.7, sugar: 3.2, na: 3, note: '鲜玉米' },
-    // 蔬菜类
-    { n: '西兰花', cat: '蔬菜', base: 100, kcal: 34, pro: 2.8, fat: 0.4, sfat: 0.1, carbs: 6.6, fiber: 2.4, sugar: 1.7, na: 33, note: '' },
-    { n: '菠菜', cat: '蔬菜', base: 100, kcal: 23, pro: 2.9, fat: 0.4, sfat: 0.1, carbs: 3.6, fiber: 2.2, sugar: 0.4, na: 79, note: '' },
-    { n: '生菜', cat: '蔬菜', base: 100, kcal: 15, pro: 1.4, fat: 0.2, sfat: 0, carbs: 2.9, fiber: 1.3, sugar: 0.9, na: 28, note: '球生菜' },
-    { n: '黄瓜', cat: '蔬菜', base: 100, kcal: 16, pro: 0.8, fat: 0.2, sfat: 0, carbs: 3.6, fiber: 0.5, sugar: 1.7, na: 3, note: '' },
-    { n: '番茄', cat: '蔬菜', base: 100, kcal: 18, pro: 0.9, fat: 0.2, sfat: 0, carbs: 3.9, fiber: 1.2, sugar: 2.6, na: 5, note: '' },
-    { n: '胡萝卜', cat: '蔬菜', base: 100, kcal: 41, pro: 0.9, fat: 0.2, sfat: 0, carbs: 9.6, fiber: 2.8, sugar: 4.7, na: 69, note: '' },
-    // 水果类
-    { n: '苹果', cat: '水果', base: 100, kcal: 52, pro: 0.3, fat: 0.2, sfat: 0, carbs: 13.8, fiber: 2.4, sugar: 10.4, na: 1, note: '带皮' },
-    { n: '香蕉', cat: '水果', base: 100, kcal: 89, pro: 1.1, fat: 0.3, sfat: 0.1, carbs: 22.8, fiber: 2.6, sugar: 12.2, na: 1, note: '' },
-    { n: '蓝莓', cat: '水果', base: 100, kcal: 57, pro: 0.7, fat: 0.3, sfat: 0, carbs: 14.5, fiber: 2.4, sugar: 10, na: 1, note: '' },
-    { n: '牛油果', cat: '水果', base: 100, kcal: 160, pro: 2, fat: 14.7, sfat: 2.1, carbs: 8.5, fiber: 6.7, sugar: 0.7, na: 7, note: '' },
-    // 零食/油脂
-    { n: '坚果混合', cat: '零食', base: 100, kcal: 607, pro: 20, fat: 52, sfat: 7, carbs: 20, fiber: 10, sugar: 5, na: 5, note: '原味' },
-    { n: '黑巧克力', cat: '零食', base: 100, kcal: 546, pro: 4.2, fat: 31, sfat: 18.5, carbs: 61, fiber: 11, sugar: 48, na: 6, note: '85%可可' },
-    { n: '薯片', cat: '零食', base: 100, kcal: 536, pro: 7, fat: 36, sfat: 12, carbs: 53, fiber: 4, sugar: 1, na: 500, note: '原味' },
-    // 饮料
-    { n: '牛奶(全脂)', cat: '饮料', base: 100, kcal: 61, pro: 3.2, fat: 3.3, sfat: 1.9, carbs: 4.8, fiber: 0, sugar: 4.8, na: 44, note: '' },
-    { n: '无糖豆浆', cat: '饮料', base: 100, kcal: 33, pro: 3.3, fat: 1.8, sfat: 0.3, carbs: 1.5, fiber: 0.5, sugar: 0.5, na: 3, note: '' },
-    { n: '美式咖啡', cat: '饮料', base: 100, kcal: 2, pro: 0.3, fat: 0, sfat: 0, carbs: 0, fiber: 0, sugar: 0, na: 5, note: '无糖' },
-    { n: '绿茶', cat: '饮料', base: 100, kcal: 1, pro: 0.2, fat: 0, sfat: 0, carbs: 0.2, fiber: 0, sugar: 0, na: 1, note: '无糖' }
+    // ===== 主食/谷物碳水 =====
+    { n: '谷多贝果', cat: '主食', base: 80, kcal: 220, pro: 8, fat: 2, sfat: 0.4, carbs: 40, fiber: 6, sugar: 3, na: 300, note: '全谷物慢碳，每只80g' },
+    { n: '高纤高蛋白谷萃圆面', cat: '主食', base: 100, kcal: 337, pro: 34.5, fat: 6.8, sfat: 0.8, carbs: 45, fiber: 15, sugar: 2, na: 32, note: '低GI=21，干重' },
+    { n: '七色糙米', cat: '主食', base: 100, kcal: 360, pro: 7.5, fat: 2.5, sfat: 0.5, carbs: 76, fiber: 3.5, sugar: 1, na: 5, note: '生重，日常主食首选' },
+    { n: '山姆三色糙米', cat: '主食', base: 100, kcal: 358, pro: 7.2, fat: 2.4, sfat: 0.4, carbs: 75, fiber: 3, sugar: 1, na: 4, note: '生重，备选主食' },
+    { n: '山姆奇亚籽全麦面包', cat: '主食', base: 40, kcal: 110, pro: 4.5, fat: 2, sfat: 0.3, carbs: 18, fiber: 3, sugar: 2, na: 120, note: '每片40g' },
+    { n: '那街那巷牛肉面', cat: '主食', base: 300, kcal: 540, pro: 24, fat: 18, sfat: 6, carbs: 70, fiber: 4, sugar: 3, na: 2400, note: '每份1/3，高钠不喝汤' },
+
+    // ===== 肉/水产/高蛋白 =====
+    { n: '山姆香草鸡胸肉', cat: '肉蛋水产', base: 100, kcal: 115, pro: 23, fat: 1.8, sfat: 0.5, carbs: 1, fiber: 0, sugar: 0, na: 280, note: '低脂高蛋白首选' },
+    { n: '瘦牛肉(牛里脊/牛腱)', cat: '肉蛋水产', base: 100, kcal: 105, pro: 21, fat: 2, sfat: 1.2, carbs: 0, fiber: 0, sugar: 0, na: 45, note: '白灼为主，生重' },
+    { n: '南美白对虾', cat: '肉蛋水产', base: 100, kcal: 93, pro: 18.6, fat: 0.8, sfat: 0.1, carbs: 0.2, fiber: 0, sugar: 0, na: 130, note: '净肉，主力荤菜' },
+    { n: '冷冻巴沙鱼', cat: '肉蛋水产', base: 100, kcal: 105, pro: 17, fat: 3, sfat: 1, carbs: 0, fiber: 0, sugar: 0, na: 250, note: '净肉，蛋白缺口补充' },
+    { n: '山姆牛肋条', cat: '肉蛋水产', base: 100, kcal: 215, pro: 18, fat: 15, sfat: 6, carbs: 0, fiber: 0, sugar: 0, na: 55, note: '高脂控量，生重' },
+    { n: '黑鳕鱼', cat: '肉蛋水产', base: 100, kcal: 210, pro: 18, fat: 15, sfat: 3.5, carbs: 0, fiber: 0, sugar: 0, na: 60, note: '去皮净肉，高Omega-3' },
+    { n: '三文鱼腩', cat: '肉蛋水产', base: 100, kcal: 280, pro: 16, fat: 24, sfat: 5, carbs: 0, fiber: 0, sugar: 0, na: 50, note: '高脂高钠，仅醋蘸' },
+    { n: '乳清蛋白粉', cat: '肉蛋水产', base: 30, kcal: 110, pro: 24, fat: 1.5, sfat: 0.5, carbs: 3, fiber: 1, sugar: 2, na: 50, note: '⚠️最后手段，肠胃不耐受' },
+    { n: '玉子烧', cat: '肉蛋水产', base: 100, kcal: 140, pro: 10, fat: 8, sfat: 3, carbs: 5, fiber: 0, sugar: 3, na: 200, note: '早餐备选' },
+
+    // ===== 蔬菜/菌菇/豆制品 =====
+    { n: '黄瓜', cat: '蔬菜菌菇', base: 100, kcal: 16, pro: 0.8, fat: 0.2, sfat: 0, carbs: 2.9, fiber: 0.5, sugar: 1.7, na: 5, note: '⭐优先推荐，消水肿' },
+    { n: '绿叶小青菜', cat: '蔬菜菌菇', base: 100, kcal: 15, pro: 1.5, fat: 0.2, sfat: 0, carbs: 2.5, fiber: 1.2, sugar: 0.8, na: 40, note: '高纤高钾' },
+    { n: '西兰花', cat: '蔬菜菌菇', base: 100, kcal: 34, pro: 2.8, fat: 0.4, sfat: 0.1, carbs: 6.6, fiber: 2.4, sugar: 1.7, na: 30, note: '低钠高纤' },
+    { n: '羽衣甘蓝', cat: '蔬菜菌菇', base: 100, kcal: 30, pro: 2.5, fat: 0.4, sfat: 0, carbs: 5.5, fiber: 4, sugar: 1, na: 25, note: '高维生素高纤' },
+    { n: '芦笋', cat: '蔬菜菌菇', base: 100, kcal: 20, pro: 2.2, fat: 0.1, sfat: 0, carbs: 3.8, fiber: 2.1, sugar: 1.5, na: 2, note: '提鲜增香' },
+    { n: '鲜菌菇(混合)', cat: '蔬菜菌菇', base: 100, kcal: 30, pro: 3, fat: 0.3, sfat: 0, carbs: 5.2, fiber: 2, sugar: 1, na: 8, note: '高钾高碘' },
+    { n: '秋葵', cat: '蔬菜菌菇', base: 100, kcal: 37, pro: 2, fat: 0.1, sfat: 0, carbs: 7, fiber: 2.5, sugar: 2, na: 4, note: '高钾高纤，炖汤' },
+    { n: '鲜海带', cat: '蔬菜菌菇', base: 100, kcal: 12, pro: 1.2, fat: 0.1, sfat: 0, carbs: 2.1, fiber: 0.5, sugar: 0.5, na: 8, note: '高钾' },
+    { n: '干裙带菜', cat: '蔬菜菌菇', base: 3, kcal: 8, pro: 1, fat: 0.1, sfat: 0, carbs: 1.5, fiber: 0.8, sugar: 0.3, na: 80, note: '每3g干重，泡发30g' },
+    { n: '老豆腐(北豆腐)', cat: '蔬菜菌菇', base: 100, kcal: 85, pro: 8.1, fat: 3.7, sfat: 0.5, carbs: 1.9, fiber: 0.3, sugar: 0.3, na: 7, note: '⚠️暂无备货' },
+    { n: '嫩豆腐(南豆腐)', cat: '蔬菜菌菇', base: 100, kcal: 60, pro: 6.2, fat: 2.5, sfat: 0.3, carbs: 1.5, fiber: 0.2, sugar: 0.2, na: 5, note: '⚠️暂无备货' },
+    { n: '内酯豆腐', cat: '蔬菜菌菇', base: 100, kcal: 50, pro: 5, fat: 1.9, sfat: 0.2, carbs: 1.2, fiber: 0.1, sugar: 0.1, na: 3, note: '⚠️暂无备货' },
+    { n: '冻豆腐', cat: '蔬菜菌菇', base: 100, kcal: 80, pro: 8, fat: 3.5, sfat: 0.4, carbs: 1.8, fiber: 0.3, sugar: 0.2, na: 5, note: '⚠️暂无备货' },
+
+    // ===== 水果 =====
+    { n: '西瓜(净肉)', cat: '水果', base: 100, kcal: 30, pro: 0.6, fat: 0.2, sfat: 0, carbs: 7.5, fiber: 0.4, sugar: 6, na: 3, note: '高钾低卡' },
+    { n: '小番茄(圣女果)', cat: '水果', base: 100, kcal: 25, pro: 1, fat: 0.2, sfat: 0, carbs: 5.8, fiber: 1.2, sugar: 3.5, na: 5, note: '应季推荐' },
+    { n: '桃子(净肉)', cat: '水果', base: 100, kcal: 42, pro: 0.9, fat: 0.2, sfat: 0, carbs: 10, fiber: 1.7, sugar: 7, na: 1, note: '日常加餐' },
+    { n: '杨梅', cat: '水果', base: 100, kcal: 30, pro: 0.8, fat: 0.2, sfat: 0, carbs: 7, fiber: 1, sugar: 5, na: 1, note: '应季低热量，去核' },
+
+    // ===== 坚果/零食/甜品 =====
+    { n: '无盐烤白皮花生米', cat: '零食甜品', base: 30, kcal: 168, pro: 7.2, fat: 14.4, sfat: 0.7, carbs: 4.5, fiber: 2.5, sugar: 1.5, na: 3, note: '唯一指定坚果' },
+    { n: '山姆MM开心果坚果棒', cat: '零食甜品', base: 35, kcal: 180, pro: 5, fat: 12, sfat: 1.5, carbs: 15, fiber: 5, sugar: 6, na: 45, note: '高纤促排便' },
+    { n: '盒马无添加无核大西梅', cat: '零食甜品', base: 100, kcal: 240, pro: 2.5, fat: 0.5, sfat: 0, carbs: 60, fiber: 8, sugar: 30, na: 5, note: '高钾' },
+    { n: '东北大板巧克力冰棍', cat: '零食甜品', base: 90, kcal: 170, pro: 1.5, fat: 9, sfat: 4, carbs: 22, fiber: 0.5, sugar: 18, na: 50, note: '⚠️饱和脂肪高，浅尝' },
+    { n: '八喜巧克力脆皮冰淇淋', cat: '零食甜品', base: 70, kcal: 210, pro: 3, fat: 14, sfat: 9, carbs: 20, fiber: 0.3, sugar: 16, na: 80, note: '⚠️饱和脂肪极高' },
+    { n: '麦当劳圆筒甜筒', cat: '零食甜品', base: 92, kcal: 145, pro: 3.7, fat: 3.8, sfat: 2.2, carbs: 23, fiber: 0, sugar: 18, na: 55, note: '零食备选' },
+    { n: '山姆芥末夏威夷果', cat: '零食甜品', base: 30, kcal: 190, pro: 2.5, fat: 19, sfat: 7, carbs: 5, fiber: 2, sugar: 1, na: 80, note: '⚠️少碰，饱和脂肪极高' },
+
+    // ===== 饮品 =====
+    { n: '每日鲜语0乳糖全脂牛奶', cat: '饮品', base: 100, kcal: 65, pro: 3.2, fat: 3.8, sfat: 2.2, carbs: 5, fiber: 0, sugar: 5, na: 50, note: '' },
+    { n: '山姆纯椰子水', cat: '饮品', base: 100, kcal: 19, pro: 0.3, fat: 0, sfat: 0, carbs: 4.5, fiber: 0.1, sugar: 3, na: 25, note: '高钾，冷饮首选' },
+    { n: '美式气泡水', cat: '饮品', base: 100, kcal: 0, pro: 0, fat: 0, sfat: 0, carbs: 0, fiber: 0, sugar: 0, na: 0, note: '每日固定' },
+
+    // ===== 调味品 =====
+    { n: '默顿无碘盐', cat: '调味品', base: 1, kcal: 0, pro: 0, fat: 0, sfat: 0, carbs: 0, fiber: 0, sugar: 0, na: 390, note: '控量' },
+    { n: '薄盐生抽', cat: '调味品', base: 5, kcal: 3, pro: 0.5, fat: 0, sfat: 0, carbs: 0.5, fiber: 0, sugar: 0.3, na: 300, note: '控量' },
+    { n: '精制植物油', cat: '调味品', base: 10, kcal: 90, pro: 0, fat: 10, sfat: 1.2, carbs: 0, fiber: 0, sugar: 0, na: 0, note: '控量' },
+    { n: '芝麻油', cat: '调味品', base: 2, kcal: 18, pro: 0, fat: 2, sfat: 0.3, carbs: 0, fiber: 0, sugar: 0, na: 0, note: '提香用' },
+    { n: '象大厨爆麻花椒油', cat: '调味品', base: 10, kcal: 88, pro: 0, fat: 10, sfat: 0.9, carbs: 0, fiber: 0, sugar: 0, na: 0, note: '拌面/凉拌' },
+    { n: '大红醋', cat: '调味品', base: 10, kcal: 3, pro: 0, fat: 0, sfat: 0, carbs: 0.7, fiber: 0, sugar: 0.5, na: 5, note: '蘸食提味' },
+    { n: '青芥辣', cat: '调味品', base: 1, kcal: 2, pro: 0.1, fat: 0, sfat: 0, carbs: 0.4, fiber: 0.1, sugar: 0.1, na: 50, note: '蘸食' },
+    { n: '满锅鲜松露红烧汁', cat: '调味品', base: 10, kcal: 9.8, pro: 0.2, fat: 0.1, sfat: 0, carbs: 2.2, fiber: 0, sugar: 1.5, na: 420, note: '⚠️高钠' },
+    { n: '西京白味增', cat: '调味品', base: 100, kcal: 243, pro: 12, fat: 3.9, sfat: 0.6, carbs: 40, fiber: 5, sugar: 15, na: 1929, note: '⚠️极高钠，慎用' },
+    { n: '宝本味淋', cat: '调味品', base: 100, kcal: 189, pro: 0.5, fat: 0, sfat: 0, carbs: 35, fiber: 0, sugar: 25, na: 5, note: '高糖，14度酒精' },
+    { n: '宝料理用清酒', cat: '调味品', base: 100, kcal: 94, pro: 0.3, fat: 0, sfat: 0, carbs: 2, fiber: 0, sugar: 0, na: 2, note: '去腥增香' },
+    { n: '奥赫100%柠檬汁', cat: '调味品', base: 100, kcal: 23, pro: 0.5, fat: 0, sfat: 0, carbs: 6, fiber: 0.5, sugar: 2.5, na: 0, note: '零钠零脂' },
+    { n: '阿洛酮糖', cat: '调味品', base: 1, kcal: 0, pro: 0, fat: 0, sfat: 0, carbs: 1, fiber: 0, sugar: 0, na: 0, note: '代糖' },
+    { n: '悬溺·巧克力酱', cat: '调味品', base: 100, kcal: 114, pro: 5.8, fat: 3, sfat: 1.5, carbs: 18, fiber: 4, sugar: 10, na: 64, note: '控量' },
+
+    // ===== 面包(红跑车) =====
+    { n: '红跑车-全麦核桃', cat: '面包', base: 100, kcal: 285, pro: 10, fat: 6, sfat: 1, carbs: 48, fiber: 6, sugar: 5, na: 280, note: '' },
+    { n: '红跑车-杂粮谷物', cat: '面包', base: 100, kcal: 270, pro: 9, fat: 5, sfat: 0.8, carbs: 47, fiber: 7, sugar: 4, na: 260, note: '' },
+    { n: '红跑车-奇亚籽吐司', cat: '面包', base: 100, kcal: 290, pro: 11, fat: 7, sfat: 1.2, carbs: 45, fiber: 5, sugar: 6, na: 310, note: '' },
+    { n: '红跑车-红豆吐司', cat: '面包', base: 100, kcal: 310, pro: 8, fat: 6, sfat: 1.5, carbs: 55, fiber: 3, sugar: 15, na: 290, note: '' },
+    { n: '红跑车-牛角包', cat: '面包', base: 100, kcal: 400, pro: 7, fat: 22, sfat: 12, carbs: 45, fiber: 2, sugar: 8, na: 350, note: '⚠️高饱和脂肪' },
+    { n: '红跑车-可颂', cat: '面包', base: 100, kcal: 410, pro: 8, fat: 24, sfat: 14, carbs: 43, fiber: 2, sugar: 7, na: 340, note: '⚠️高饱和脂肪' },
+    { n: '红跑车-蒜香面包', cat: '面包', base: 100, kcal: 350, pro: 8, fat: 15, sfat: 5, carbs: 48, fiber: 2, sugar: 3, na: 480, note: '⚠️高钠' },
+    { n: '红跑车-芝士面包', cat: '面包', base: 100, kcal: 330, pro: 10, fat: 12, sfat: 6, carbs: 46, fiber: 2, sugar: 6, na: 380, note: '⚠️高饱和脂肪' },
+    { n: '红跑车-肉松面包', cat: '面包', base: 100, kcal: 340, pro: 11, fat: 10, sfat: 3, carbs: 52, fiber: 2, sugar: 8, na: 420, note: '⚠️高钠' },
+    { n: '红跑车-奶油面包', cat: '面包', base: 100, kcal: 360, pro: 7, fat: 16, sfat: 9, carbs: 50, fiber: 1, sugar: 18, na: 280, note: '⚠️高糖高脂' },
+    { n: '红跑车-巧克力面包', cat: '面包', base: 100, kcal: 350, pro: 7, fat: 12, sfat: 6, carbs: 55, fiber: 3, sugar: 20, na: 260, note: '⚠️高糖' },
+    { n: '红跑车-椰蓉面包', cat: '面包', base: 100, kcal: 340, pro: 7, fat: 14, sfat: 8, carbs: 50, fiber: 2, sugar: 16, na: 250, note: '⚠️高糖高脂' },
+    { n: '红跑车-菠萝包', cat: '面包', base: 100, kcal: 370, pro: 6, fat: 15, sfat: 8, carbs: 54, fiber: 1, sugar: 15, na: 240, note: '⚠️高糖高脂' },
+    { n: '红跑车-紫薯面包', cat: '面包', base: 100, kcal: 280, pro: 7, fat: 5, sfat: 1, carbs: 52, fiber: 4, sugar: 10, na: 220, note: '' },
+    { n: '红跑车-南瓜面包', cat: '面包', base: 100, kcal: 270, pro: 6, fat: 4, sfat: 0.8, carbs: 52, fiber: 3, sugar: 8, na: 210, note: '' },
+    { n: '红跑车-贝果原味', cat: '面包', base: 100, kcal: 250, pro: 9, fat: 2, sfat: 0.4, carbs: 48, fiber: 2, sugar: 4, na: 350, note: '' },
+    { n: '红跑车-法棍', cat: '面包', base: 100, kcal: 270, pro: 9, fat: 1.5, sfat: 0.3, carbs: 54, fiber: 2, sugar: 1, na: 580, note: '⚠️高钠' }
   ];
 }
 
