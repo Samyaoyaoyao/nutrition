@@ -1967,16 +1967,22 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
 5. reply用简洁的中文告知用户识别结果
 6. 不确定的内容设为null，needsConfirmation设为true`;
 
-    const content = [{ type: 'text', text: prompt }];
-    
-    // 用户文字
+    // 合并所有文字到一个 text 段
+    let fullText = prompt;
     if (text && text.trim()) {
-      content.push({ type: 'text', text: `用户输入：${text}` });
+      fullText += `\n\n用户输入：${text}`;
     }
     
-    // 图片
-    for (const img of images) {
-      content.push({ type: 'image_url', image_url: { url: img } });
+    let content;
+    if (images && images.length > 0) {
+      // 有图片时用数组格式（多模态）
+      content = [{ type: 'text', text: fullText }];
+      for (const img of images) {
+        content.push({ type: 'image_url', image_url: { url: img } });
+      }
+    } else {
+      // 纯文字用字符串格式
+      content = fullText;
     }
     
     const messages = [{ role: 'user', content }];
