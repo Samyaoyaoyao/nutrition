@@ -150,11 +150,28 @@ body.light{
 .plan-list .plan-item:last-child{border-bottom:none}
 .plan-list .plan-check{width:22px;height:22px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;cursor:pointer;transition:all .2s}
 .plan-list .plan-item.done .plan-check{background:var(--primary);border-color:var(--primary);color:#000}
+.plan-list .plan-item.cancelled .plan-check{background:var(--bg-card-2);border-color:var(--text-3);color:var(--text-3)}
+.plan-list .plan-item.cancelled .plan-check::after{content:'×'}
 .plan-list .plan-info{flex:1;min-width:0}
-.plan-list .plan-name{font-size:14px}
+.plan-list .plan-name{font-size:14px;display:flex;align-items:center;gap:6px}
 .plan-list .plan-item.done .plan-name{color:var(--text-3);text-decoration:line-through}
+.plan-list .plan-item.cancelled .plan-name{color:var(--text-3);text-decoration:line-through}
 .plan-list .plan-time{font-size:11px;color:var(--text-3);margin-top:2px}
 .plan-list .plan-cat{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--bg-card-2);color:var(--text-2);flex-shrink:0}
+.plan-list .plan-del{font-size:16px;color:var(--text-3);padding:4px 8px;cursor:pointer;flex-shrink:0;display:none}
+.plan-list .plan-item:hover .plan-del{display:block}
+.plan-list .plan-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;color:var(--primary);font-size:13px;cursor:pointer;border:1px dashed var(--border);border-radius:8px;margin-top:8px}
+.plan-list .plan-add-btn:active{opacity:.7}
+.plan-status-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg-soft);border-radius:16px 16px 0 0;padding:20px;z-index:1000;transform:translateY(100%);transition:transform .3s}
+.plan-status-sheet.show{transform:translateY(0)}
+.plan-status-sheet h3{font-size:16px;margin-bottom:12px;text-align:center}
+.plan-status-options{display:flex;flex-direction:column;gap:8px}
+.plan-status-option{padding:14px;background:var(--bg-card);border-radius:10px;text-align:center;font-size:15px;cursor:pointer;border:1px solid var(--border-soft)}
+.plan-status-option:active{background:var(--bg-card-2)}
+.plan-status-option.active{border-color:var(--primary);color:var(--primary)}
+.plan-status-cancel{margin-top:8px;padding:14px;text-align:center;font-size:15px;color:var(--text-2);cursor:pointer}
+.plan-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none}
+.plan-mask.show{display:block}
 
 /* ===== 按钮 ===== */
 .btn{padding:10px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
@@ -364,10 +381,11 @@ body.light{
     <!-- 今日计划（三段式） -->
     <div class="card">
       <div class="card-title">今日计划
-        <div class="segment" style="transform:scale(.8);transform-origin:right">
+        <div class="segment" style="transform:scale(.75);transform-origin:right">
           <button class="active" data-plan="all" onclick="filterPlan('all')">全部</button>
           <button data-plan="todo" onclick="filterPlan('todo')">待完成</button>
           <button data-plan="done" onclick="filterPlan('done')">已完成</button>
+          <button data-plan="cancelled" onclick="filterPlan('cancelled')">已取消</button>
         </div>
       </div>
       <div class="plan-list" id="plan-list"></div>
@@ -2185,6 +2203,7 @@ function renderMetricsDetail(totals) {
 
 // ===== 三段式计划清单 =====
 let planFilter = 'all';
+let _planActiveId = null;
 
 function getDefaultTasks() {
   const s = S.settings;
@@ -2192,14 +2211,14 @@ function getDefaultTasks() {
   let id = 1;
   
   // 起床
-  tasks.push({ id: id++, name: '起床', time: s.wakeTime, cat: '作息', done: true, type: 'wake', editable: false });
+  tasks.push({ id: id++, name: '起床', time: s.wakeTime, cat: '作息', status: 'done', type: 'wake', editable: false });
   
   // 体重（晨起）
-  tasks.push({ id: id++, name: '晨起称体重', time: s.wakeTime, cat: '体重', done: S.today.weightMorning !== null, type: 'weightMorning', editable: true });
+  tasks.push({ id: id++, name: '晨起称体重', time: s.wakeTime, cat: '体重', status: S.today.weightMorning !== null ? 'done' : 'todo', type: 'weightMorning', editable: true });
   
   // 正餐（OMAD）
   if (s.mealPattern === 'omad') {
-    tasks.push({ id: id++, name: '正餐', time: s.mealTime, cat: '饮食', done: S.today.meals.length > 0, type: 'meal', editable: true });
+    tasks.push({ id: id++, name: '正餐', time: s.mealTime, cat: '饮食', status: S.today.meals.length > 0 ? 'done' : 'todo', type: 'meal', editable: true });
   }
   
   // 三项运动
@@ -2209,7 +2228,7 @@ function getDefaultTasks() {
       name: ex.name, 
       time: '白天', 
       cat: '运动', 
-      done: S.today.exercise[i], 
+      status: S.today.exercise[i] ? 'done' : 'todo', 
       type: 'exercise',
       exIndex: i,
       editable: true 
@@ -2217,14 +2236,14 @@ function getDefaultTasks() {
   });
   
   // 补剂
-  tasks.push({ id: id++, name: '镁复合剂 2粒', time: '随餐', cat: '补剂', done: false, type: 'supp_mag', editable: true });
-  tasks.push({ id: id++, name: '鱼油 1粒', time: '01:30', cat: '补剂', done: false, type: 'supp_fish', editable: true });
+  tasks.push({ id: id++, name: '镁复合剂 2粒', time: '随餐', cat: '补剂', status: 'todo', type: 'supp_mag', editable: true });
+  tasks.push({ id: id++, name: '鱼油 1粒', time: '01:30', cat: '补剂', status: 'todo', type: 'supp_fish', editable: true });
   
   // 睡前体重
-  tasks.push({ id: id++, name: '睡前称体重', time: s.sleepTime, cat: '体重', done: S.today.weightEvening !== null, type: 'weightEvening', editable: true });
+  tasks.push({ id: id++, name: '睡前称体重', time: s.sleepTime, cat: '体重', status: S.today.weightEvening !== null ? 'done' : 'todo', type: 'weightEvening', editable: true });
   
   // 睡觉
-  tasks.push({ id: id++, name: '睡觉', time: s.sleepTime, cat: '作息', done: false, type: 'sleep', editable: false });
+  tasks.push({ id: id++, name: '睡觉', time: s.sleepTime, cat: '作息', status: 'todo', type: 'sleep', editable: false });
   
   return tasks;
 }
@@ -2249,28 +2268,125 @@ function renderPlanList() {
   const container = document.getElementById('plan-list');
   
   let filtered = tasks;
-  if (planFilter === 'todo') filtered = tasks.filter(t => !t.done);
-  if (planFilter === 'done') filtered = tasks.filter(t => t.done);
+  if (planFilter === 'todo') filtered = tasks.filter(t => t.status === 'todo');
+  if (planFilter === 'done') filtered = tasks.filter(t => t.status === 'done');
+  if (planFilter === 'cancelled') filtered = tasks.filter(t => t.status === 'cancelled');
   
-  const doneCount = tasks.filter(t => t.done).length;
-  const total = tasks.length;
-  document.getElementById('plan-progress').textContent = `完成 ${doneCount}/${total}  ·  ${Math.round(doneCount/total*100)}%`;
+  const doneCount = tasks.filter(t => t.status === 'done').length;
+  const total = tasks.filter(t => t.status !== 'cancelled').length;
+  const pct = total > 0 ? Math.round(doneCount/total*100) : 0;
+  document.getElementById('plan-progress').textContent = `完成 ${doneCount}/${total}  ·  ${pct}%`;
   
+  let html = '';
   if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty"><div class="icon">✅</div><div>暂无${planFilter==='todo'?'待完成':'已完成'}任务</div></div>`;
-    return;
+    const label = planFilter==='todo'?'待完成':planFilter==='done'?'已完成':'已取消';
+    html += `<div class="empty"><div class="icon">✅</div><div>暂无${label}任务</div></div>`;
   }
   
-  container.innerHTML = filtered.map(t => `
-    <div class="plan-item ${t.done ? 'done' : ''}" data-id="${t.id}">
-      <div class="plan-check" onclick="togglePlanTask(${t.id})">${t.done ? '✓' : ''}</div>
-      <div class="plan-info">
-        <div class="plan-name">${t.name}</div>
-        <div class="plan-time">⏰ ${t.time}</div>
+  filtered.forEach(t => {
+    const icon = t.status === 'done' ? '✓' : t.status === 'cancelled' ? '×' : '';
+    html += `
+      <div class="plan-item ${t.status}" data-id="${t.id}">
+        <div class="plan-check" onclick="openPlanStatusSheet(${t.id})">${icon}</div>
+        <div class="plan-info" onclick="openPlanStatusSheet(${t.id})">
+          <div class="plan-name">${t.name}</div>
+          <div class="plan-time">⏰ ${t.time}</div>
+        </div>
+        <span class="plan-cat">${t.cat}</span>
+        ${t.custom ? `<span class="plan-del" onclick="deletePlanTask(${t.id});event.stopPropagation()">✕</span>` : ''}
       </div>
-      <span class="plan-cat">${t.cat}</span>
-    </div>
-  `).join('');
+    `;
+  });
+  
+  html += `<div class="plan-add-btn" onclick="openPlanAddSheet()">＋ 新增计划项</div>`;
+  
+  container.innerHTML = html;
+}
+
+function openPlanStatusSheet(id) {
+  ensureTodayTasks();
+  const task = S.today.tasks.find(t => t.id === id);
+  if (!task || !task.editable) return;
+  _planActiveId = id;
+  document.getElementById('plan-mask').classList.add('show');
+  document.getElementById('plan-status-sheet').classList.add('show');
+  document.querySelectorAll('#plan-status-sheet .plan-status-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.status === task.status);
+  });
+}
+
+function closePlanStatusSheet() {
+  _planActiveId = null;
+  document.getElementById('plan-mask').classList.remove('show');
+  document.getElementById('plan-status-sheet').classList.remove('show');
+}
+
+function setPlanTaskStatus(status) {
+  if (_planActiveId === null) return;
+  ensureTodayTasks();
+  const task = S.today.tasks.find(t => t.id === _planActiveId);
+  if (!task) return;
+  
+  task.status = status;
+  
+  // 联动真实数据
+  if (task.type === 'exercise' && task.exIndex !== undefined) {
+    S.today.exercise[task.exIndex] = (status === 'done');
+  }
+  
+  saveData();
+  renderPlanList();
+  renderHome();
+  closePlanStatusSheet();
+}
+
+function openPlanAddSheet() {
+  document.getElementById('plan-add-name').value = '';
+  document.getElementById('plan-add-time').value = '';
+  document.getElementById('plan-add-cat').value = '其他';
+  document.getElementById('plan-add-mask').classList.add('show');
+  document.getElementById('plan-add-sheet').classList.add('show');
+  setTimeout(() => document.getElementById('plan-add-name').focus(), 300);
+}
+
+function closePlanAddSheet() {
+  document.getElementById('plan-add-mask').classList.remove('show');
+  document.getElementById('plan-add-sheet').classList.remove('show');
+}
+
+function confirmAddPlan() {
+  const name = document.getElementById('plan-add-name').value.trim();
+  if (!name) return;
+  const time = document.getElementById('plan-add-time').value.trim() || '今天';
+  const cat = document.getElementById('plan-add-cat').value;
+  
+  ensureTodayTasks();
+  const maxId = Math.max(0, ...S.today.tasks.map(t => t.id));
+  S.today.tasks.push({
+    id: maxId + 1,
+    name,
+    time,
+    cat,
+    status: 'todo',
+    type: 'custom',
+    editable: true,
+    custom: true
+  });
+  
+  saveData();
+  renderPlanList();
+  renderHome();
+  closePlanAddSheet();
+}
+
+function deletePlanTask(id) {
+  ensureTodayTasks();
+  const idx = S.today.tasks.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  S.today.tasks.splice(idx, 1);
+  saveData();
+  renderPlanList();
+  renderHome();
 }
 
 function togglePlanTask(id) {
@@ -2278,11 +2394,10 @@ function togglePlanTask(id) {
   const task = S.today.tasks.find(t => t.id === id);
   if (!task || !task.editable) return;
   
-  task.done = !task.done;
+  task.status = task.status === 'done' ? 'todo' : 'done';
   
-  // 联动真实数据
   if (task.type === 'exercise' && task.exIndex !== undefined) {
-    S.today.exercise[task.exIndex] = task.done;
+    S.today.exercise[task.exIndex] = (task.status === 'done');
   }
   
   saveData();
@@ -3925,5 +4040,37 @@ if (document.readyState === 'loading') {
   init();
 }
 </script>
+  <!-- 计划状态选择弹窗 -->
+  <div class="plan-mask" id="plan-mask" onclick="closePlanStatusSheet()"></div>
+  <div class="plan-status-sheet" id="plan-status-sheet">
+    <h3>修改状态</h3>
+    <div class="plan-status-options">
+      <div class="plan-status-option" data-status="todo" onclick="setPlanTaskStatus('todo')">⏳ 待执行</div>
+      <div class="plan-status-option" data-status="done" onclick="setPlanTaskStatus('done')">✅ 已完成</div>
+      <div class="plan-status-option" data-status="cancelled" onclick="setPlanTaskStatus('cancelled')">❌ 已取消</div>
+    </div>
+    <div class="plan-status-cancel" onclick="closePlanStatusSheet()">取消</div>
+  </div>
+
+  <!-- 新增计划弹窗 -->
+  <div class="plan-mask" id="plan-add-mask" onclick="closePlanAddSheet()"></div>
+  <div class="plan-status-sheet" id="plan-add-sheet">
+    <h3>新增计划项</h3>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <input type="text" id="plan-add-name" placeholder="项目名称，如：吃苹果" style="padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:15px;outline:none;color:var(--text)">
+      <input type="text" id="plan-add-time" placeholder="时间（可选），如：下午3点" style="padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:15px;outline:none;color:var(--text)">
+      <select id="plan-add-cat" style="padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:15px;outline:none;color:var(--text)">
+        <option value="饮食">饮食</option>
+        <option value="运动">运动</option>
+        <option value="补剂">补剂</option>
+        <option value="体重">体重</option>
+        <option value="作息">作息</option>
+        <option value="其他">其他</option>
+      </select>
+      <button class="btn btn-primary" style="width:100%;padding:14px" onclick="confirmAddPlan()">添加</button>
+    </div>
+    <div class="plan-status-cancel" onclick="closePlanAddSheet()">取消</div>
+  </div>
+
 </body>
 </html>
