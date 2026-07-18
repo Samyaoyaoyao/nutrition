@@ -91,6 +91,21 @@ body.light{
 .tab-bar .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--text-3);transition:color .2s}
 .tab-bar .tab .icon{font-size:22px}
 .tab-bar .tab.active{color:var(--primary)}
+.tab-bar .tab-center .icon{background:var(--primary);color:#000;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-18px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+
+/* ===== 快捷标签 ===== */
+.chip{display:inline-block;padding:6px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--text-2);white-space:nowrap;cursor:pointer;transition:all .2s}
+.chip:active{transform:scale(.95);background:var(--bg-card-2)}
+
+/* ===== 识别结果卡片 ===== */
+.ai-result-card{background:var(--bg-card);border-radius:12px;padding:14px;margin-top:8px;border:1px solid var(--border-soft)}
+.ai-result-card .result-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ai-result-card .result-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px}
+.ai-result-card .result-row:last-child{border-bottom:none}
+.ai-result-card .result-row .label{color:var(--text-2)}
+.ai-result-card .result-row .value{font-weight:500}
+.ai-result-card .result-actions{display:flex;gap:8px;margin-top:12px}
+.ai-result-card .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:var(--primary-bg);color:var(--primary)}
 
 /* ===== 营养进度环 ===== */
 .rings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
@@ -129,6 +144,17 @@ body.light{
 .tl-item.current::before{background:var(--warning);border-color:var(--warning);box-shadow:0 0 0 4px var(--warning-soft)}
 .tl-item .time{color:var(--text-3);font-size:11px}
 .tl-item .check{color:var(--primary);font-size:14px}
+
+/* ===== 计划清单 ===== */
+.plan-list .plan-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-soft)}
+.plan-list .plan-item:last-child{border-bottom:none}
+.plan-list .plan-check{width:22px;height:22px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;cursor:pointer;transition:all .2s}
+.plan-list .plan-item.done .plan-check{background:var(--primary);border-color:var(--primary);color:#000}
+.plan-list .plan-info{flex:1;min-width:0}
+.plan-list .plan-name{font-size:14px}
+.plan-list .plan-item.done .plan-name{color:var(--text-3);text-decoration:line-through}
+.plan-list .plan-time{font-size:11px;color:var(--text-3);margin-top:2px}
+.plan-list .plan-cat{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--bg-card-2);color:var(--text-2);flex-shrink:0}
 
 /* ===== 按钮 ===== */
 .btn{padding:10px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
@@ -335,16 +361,30 @@ body.light{
       </div>
     </div>
 
-    <!-- 今日日程 -->
+    <!-- 今日计划（三段式） -->
     <div class="card">
-      <div class="card-title">今日日程
-        <div class="segment" style="transform:scale(.85);transform-origin:right">
-          <button class="active" data-tl="all">全部</button>
-          <button data-tl="meal">饮食</button>
-          <button data-tl="exercise">运动</button>
+      <div class="card-title">今日计划
+        <div class="segment" style="transform:scale(.8);transform-origin:right">
+          <button class="active" data-plan="all" onclick="filterPlan('all')">全部</button>
+          <button data-plan="todo" onclick="filterPlan('todo')">待完成</button>
+          <button data-plan="done" onclick="filterPlan('done')">已完成</button>
         </div>
       </div>
-      <div class="timeline" id="timeline"></div>
+      <div class="plan-list" id="plan-list"></div>
+      <div id="plan-progress" style="margin-top:10px;font-size:12px;color:var(--text-3);text-align:right"></div>
+    </div>
+
+    <!-- 营养评估（首页可见） -->
+    <div class="card collapsible" id="home-assess-card">
+      <div class="card-title">
+        <button class="toggle" onclick="toggleCollapse('home-assess-card')">
+          <span>营养评估</span>
+          <span class="arrow">▼</span>
+        </button>
+      </div>
+      <div class="collapsible-content">
+        <div id="home-nutrition-assess"></div>
+      </div>
     </div>
 
     <!-- 今日推荐 -->
@@ -522,6 +562,58 @@ body.light{
 
     <!-- AI 深度分析 -->
     <button class="btn btn-primary btn-block" onclick="aiGenerateReport()">🤖 AI 深度分析</button>
+  </div>
+
+  <!-- ===== 智能录入页 ===== -->
+  <div id="page-input" class="page">
+    <div class="top-bar">
+      <div>
+        <div class="greeting">智能录入</div>
+        <div style="font-size:12px;color:var(--text-3)">说一句话 / 发一张图，自动分配到各模块</div>
+      </div>
+    </div>
+
+    <!-- 快捷指令卡片 -->
+    <div style="padding:0 16px 12px">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">试试这样说：</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <span class="chip" onclick="quickInput('晨起体重58.2，体脂16.8%')">体重体脂</span>
+        <span class="chip" onclick="quickInput('吃了200g鸡胸肉和一碗米饭')">饮食记录</span>
+        <span class="chip" onclick="quickInput('今天完成了跑步机和力量训练')">运动打卡</span>
+        <span class="chip" onclick="quickInput('把第一项运动改成下午3点')">调整计划</span>
+        <span class="chip" onclick="quickInput('取消今天的平板支撑')">取消项目</span>
+      </div>
+    </div>
+
+    <!-- 聊天记录区 -->
+    <div id="chat-messages" style="padding:0 16px 100px;min-height:50vh">
+      <div class="msg msg-bot" style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:4px">AI助手</div>
+        <div style="background:var(--bg-card);padding:10px 14px;border-radius:12px 12px 12px 4px;font-size:14px">
+          你好！把体脂秤截图、食物照片、或者一句话指令发给我，我会自动分配到对应模块。<br><br>
+          <span style="color:var(--text-3);font-size:12px">• 上传体脂秤照片 → 自动识别体重/体脂/肌肉量<br>
+          • 上传食物照片/小票 → 自动识别并加入饮食<br>
+          • 说"吃了xxx" → 自动添加饮食记录<br>
+          • 说"第x项完成" → 自动打卡运动<br>
+          • 说"取消xxx"/"改到x点" → 自动调整计划</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部输入栏 -->
+    <div style="position:fixed;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom));left:0;right:0;background:var(--bg-soft);border-top:1px solid var(--border);padding:10px 12px;backdrop-filter:blur(20px)">
+      <div id="image-preview-bar" style="display:none;gap:8px;margin-bottom:8px;overflow-x:auto">
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="btn-icon" onclick="document.getElementById('ai-image-input').click()">📷</button>
+        <input type="file" id="ai-image-input" accept="image/*" multiple style="display:none" onchange="handleAiImageUpload(event)">
+        <textarea id="ai-input" rows="1" placeholder="说点什么..." 
+          style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:10px 16px;
+          font-size:14px;color:var(--text);resize:none;outline:none;max-height:120px;font-family:inherit"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiInput()}"></textarea>
+        <button class="btn btn-primary" style="border-radius:50%;width:40px;height:40px;padding:0;flex-shrink:0" onclick="sendAiInput()">➤</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===== 我的 / 设置 ===== -->
@@ -707,9 +799,9 @@ body.light{
       <span class="icon">🍽️</span>
       <span>饮食</span>
     </button>
-    <button class="tab" data-tab="exercise" onclick="switchTab('exercise')">
-      <span class="icon">🏃</span>
-      <span>运动</span>
+    <button class="tab tab-center" data-tab="input" onclick="switchTab('input')">
+      <span class="icon">✨</span>
+      <span>录入</span>
     </button>
     <button class="tab" data-tab="report" onclick="switchTab('report')">
       <span class="icon">📊</span>
@@ -1784,6 +1876,111 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
     messages.push({ role: 'user', content: message });
 
     return this.call(messages, S.settings.modelChat, true, onStream);
+  },
+
+  // 6. AI 体脂秤截图识别
+  async aiRecognizeScale(imageBase64) {
+    const modelId = S.settings.modelVision;
+    if (!modelId) throw new Error('请先配置视觉模型 Endpoint ID');
+    
+    const prompt = `请识别这张体脂秤截图中的所有身体数据。
+请仔细读取每一个数字，注意小数点。
+
+返回严格JSON格式，不要其他文字：
+{
+  "weight": 58.5,
+  "bodyFatRate": 18.5,
+  "muscleMass": 48.2,
+  "visceralFat": 4,
+  "basalMetabolism": 1500,
+  "bmi": 19.2,
+  "bodyWater": 60,
+  "proteinRate": 18,
+  "boneMass": 2.8,
+  "notes": "识别备注"
+}
+
+注意：只返回你能从图片中明确读到的字段，读不到的不要填，返回null。数字保持原样，不要推算。`;
+
+    const messages = [{
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: imageBase64 } }
+      ]
+    }];
+
+    return this.call(messages, modelId);
+  },
+
+  // 7. AI 智能录入解析（文字+图片混合，自动分配模块）
+  async aiSmartParse(text, images = []) {
+    const modelId = S.settings.modelVision || S.settings.modelChat;
+    if (!modelId) throw new Error('请先在"我的→AI设置"中配置模型 Endpoint ID');
+    
+    let foodList = S.foods.map(f => f.n).join('、');
+    if (foodList.length > 500) foodList = foodList.substring(0, 500);
+    
+    const prompt = `你是一个营养数据录入助手。用户会发送文字描述或图片，你需要分析内容并分配到正确的模块。
+
+当前用户信息：
+- 身高${S.profile.height}cm，年龄${S.profile.age}岁，${S.profile.gender === 'male' ? '男' : '女'}性
+- 目标体重${S.profile.targetWeight}kg
+- 饮食模式：${S.settings.mealPattern === 'omad' ? 'OMAD一天一餐' : S.settings.mealPattern === 'two' ? '两餐' : '三餐'}
+
+内置食材库（部分）：${foodList}
+
+请严格按以下JSON格式返回：
+{
+  "intent": "diet_record | weight_record | exercise_checkin | plan_adjust | plan_cancel | query | other",
+  "confidence": 0.9,
+  "diet": {
+    "meals": [
+      { "name": "食物名称", "grams": 100, "matchedFood": "匹配到的食材库名称，没有则为null" }
+    ]
+  },
+  "weight": {
+    "weight": 58.5,
+    "bodyFatRate": null,
+    "muscleMass": null,
+    "type": "morning | evening | auto"
+  },
+  "exercise": {
+    "items": [
+      { "name": "跑步机快走", "index": 0, "done": true }
+    ]
+  },
+  "planAdjust": {
+    "action": "move_time | cancel | add",
+    "taskName": "任务名称",
+    "newTime": "15:00"
+  },
+  "reply": "给用户的自然语言回复，简洁确认",
+  "needsConfirmation": true
+}
+
+规则：
+1. 识别为饮食记录时，从食材库中匹配最接近的食物名
+2. 识别为体重时，判断是晨起还是睡前（根据内容或描述）
+3. 识别为运动打卡时，匹配"第一项/跑步机"=index 0，"第二项/力量"=index 1，"第三项/平板"=index 2
+4. 识别为计划调整时，解析调整动作（改时间/取消/新增）
+5. reply用简洁的中文告知用户识别结果
+6. 不确定的内容设为null，needsConfirmation设为true`;
+
+    const content = [{ type: 'text', text: prompt }];
+    
+    // 用户文字
+    if (text && text.trim()) {
+      content.push({ type: 'text', text: `用户输入：${text}` });
+    }
+    
+    // 图片
+    for (const img of images) {
+      content.push({ type: 'image_url', image_url: { url: img } });
+    }
+    
+    const messages = [{ role: 'user', content }];
+    return this.call(messages, modelId);
   }
 };
 
@@ -1895,8 +2092,11 @@ function renderHome() {
   // 关键指标
   renderMetricsDetail(totals);
   
-  // 时间线
-  renderTimeline();
+  // 今日计划（三段式）
+  renderPlanList();
+  
+  // 首页营养评估
+  renderHomeAssess(totals);
   
   // 推荐
   renderRecommend();
@@ -1977,85 +2177,168 @@ function renderMetricsDetail(totals) {
   document.getElementById('metrics-detail').innerHTML = html;
 }
 
-function renderTimeline() {
+// ===== 三段式计划清单 =====
+let planFilter = 'all';
+
+function getDefaultTasks() {
   const s = S.settings;
-  const now = new Date();
-  const currentHour = now.getHours() + now.getMinutes() / 60;
-  
-  // 解析时间为小时数
-  function parseTime(t) {
-    const [h, m] = t.split(':').map(Number);
-    return h + m / 60;
-  }
-  
-  const items = [];
+  const tasks = [];
+  let id = 1;
   
   // 起床
-  const wakeH = parseTime(s.wakeTime);
-  items.push({ time: s.wakeTime, label: '起床', icon: '🌅', done: currentHour >= wakeH, current: false });
+  tasks.push({ id: id++, name: '起床', time: s.wakeTime, cat: '作息', done: true, type: 'wake', editable: false });
   
-  // 餐次（根据饮食模式）
+  // 体重（晨起）
+  tasks.push({ id: id++, name: '晨起称体重', time: s.wakeTime, cat: '体重', done: S.today.weightMorning !== null, type: 'weightMorning', editable: true });
+  
+  // 正餐（OMAD）
   if (s.mealPattern === 'omad') {
-    const mealH = parseTime(s.mealTime);
-    const hasMeal = S.today.meals.length > 0;
-    items.push({ time: s.mealTime, label: '正餐 🍽️', icon: '🍽️', done: hasMeal, current: !hasMeal && currentHour >= mealH && currentHour < mealH + 2, type: 'meal' });
-  } else if (s.mealPattern === 'two') {
-    const lunchH = parseTime(s.mealTime) - 2;
-    const dinnerH = parseTime(s.mealTime);
-    const lunchStr = `${Math.floor(lunchH)}:00`;
-    const hasMeals = S.today.meals.length;
-    items.push({ time: lunchStr, label: '午餐', icon: '🍱', done: hasMeals > 0, type: 'meal' });
-    items.push({ time: s.mealTime, label: '晚餐', icon: '🍽️', done: hasMeals > 1, type: 'meal' });
-  } else {
-    // 三餐
-    const breakfastH = wakeH + 1;
-    const lunchH = 12;
-    const dinnerH = parseTime(s.mealTime);
-    items.push({ time: `${Math.floor(breakfastH)}:${Math.round((breakfastH%1)*60).toString().padStart(2,'0')}`, label: '早餐', icon: '🥣', done: false, type: 'meal' });
-    items.push({ time: '12:00', label: '午餐', icon: '🍱', done: false, type: 'meal' });
-    items.push({ time: s.mealTime, label: '晚餐', icon: '🍽️', done: false, type: 'meal' });
+    tasks.push({ id: id++, name: '正餐', time: s.mealTime, cat: '饮食', done: S.today.meals.length > 0, type: 'meal', editable: true });
   }
   
-  // 运动
+  // 三项运动
   CORE_EXERCISES.forEach((ex, i) => {
-    const done = S.today.exercise[i];
-    items.push({ time: '—', label: ex.name, icon: ex.icon, done, type: 'exercise' });
+    tasks.push({ 
+      id: id++, 
+      name: ex.name, 
+      time: '白天', 
+      cat: '运动', 
+      done: S.today.exercise[i], 
+      type: 'exercise',
+      exIndex: i,
+      editable: true 
+    });
   });
   
   // 补剂
-  const suppDone = S.today.supplements.filter(s => s.status === 1).length;
-  const suppTotal = S.today.supplements.length;
-  items.push({ time: '随餐', label: `补剂 ${suppDone}/${suppTotal}`, icon: '💊', done: suppDone === suppTotal, type: 'supplement' });
+  tasks.push({ id: id++, name: '镁复合剂 2粒', time: '随餐', cat: '补剂', done: false, type: 'supp_mag', editable: true });
+  tasks.push({ id: id++, name: '鱼油 1粒', time: '01:30', cat: '补剂', done: false, type: 'supp_fish', editable: true });
   
-  // 睡前称重
-  const sleepH = parseTime(s.sleepTime);
-  const hasEvening = S.today.weightEvening !== null;
-  items.push({ time: s.sleepTime, label: '睡前称重 🌙', icon: '🌙', done: hasEvening, type: 'weight' });
+  // 睡前体重
+  tasks.push({ id: id++, name: '睡前称体重', time: s.sleepTime, cat: '体重', done: S.today.weightEvening !== null, type: 'weightEvening', editable: true });
   
-  // 过滤
-  let filtered = items;
-  if (tlFilter === 'meal') filtered = items.filter(i => i.type === 'meal' || !i.type);
-  if (tlFilter === 'exercise') filtered = items.filter(i => i.type === 'exercise' || i.type === 'supplement');
+  // 睡觉
+  tasks.push({ id: id++, name: '睡觉', time: s.sleepTime, cat: '作息', done: false, type: 'sleep', editable: false });
   
-  // 找当前进行中的项
-  const finalItems = filtered.map(item => {
-    let cls = 'tl-item';
-    if (item.done) cls += ' done';
-    else if (item.time && item.time !== '—' && item.time !== '随餐') {
-      try {
-        const itemH = parseTime(item.time);
-        if (Math.abs(currentHour - itemH) < 1) cls += ' current';
-      } catch(e) {}
-    }
-    return `
-      <div class="${cls}">
-        <span>${item.icon} ${item.label}</span>
-        <span class="time">${item.done ? '✓' : item.time}</span>
+  return tasks;
+}
+
+function ensureTodayTasks() {
+  if (!S.today.tasks || !S.today.tasks.length) {
+    S.today.tasks = getDefaultTasks();
+    saveData();
+  }
+}
+
+function filterPlan(type) {
+  planFilter = type;
+  document.querySelectorAll('.segment [data-plan]').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-plan="${type}"]`).classList.add('active');
+  renderPlanList();
+}
+
+function renderPlanList() {
+  ensureTodayTasks();
+  const tasks = S.today.tasks;
+  const container = document.getElementById('plan-list');
+  
+  let filtered = tasks;
+  if (planFilter === 'todo') filtered = tasks.filter(t => !t.done);
+  if (planFilter === 'done') filtered = tasks.filter(t => t.done);
+  
+  const doneCount = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  document.getElementById('plan-progress').textContent = `完成 ${doneCount}/${total}  ·  ${Math.round(doneCount/total*100)}%`;
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="icon">✅</div><div>暂无${planFilter==='todo'?'待完成':'已完成'}任务</div></div>`;
+    return;
+  }
+  
+  container.innerHTML = filtered.map(t => `
+    <div class="plan-item ${t.done ? 'done' : ''}" data-id="${t.id}">
+      <div class="plan-check" onclick="togglePlanTask(${t.id})">${t.done ? '✓' : ''}</div>
+      <div class="plan-info">
+        <div class="plan-name">${t.name}</div>
+        <div class="plan-time">⏰ ${t.time}</div>
+      </div>
+      <span class="plan-cat">${t.cat}</span>
+    </div>
+  `).join('');
+}
+
+function togglePlanTask(id) {
+  ensureTodayTasks();
+  const task = S.today.tasks.find(t => t.id === id);
+  if (!task || !task.editable) return;
+  
+  task.done = !task.done;
+  
+  // 联动真实数据
+  if (task.type === 'exercise' && task.exIndex !== undefined) {
+    S.today.exercise[task.exIndex] = task.done;
+  }
+  
+  saveData();
+  renderPlanList();
+  renderHome();
+}
+
+// 调整计划时间
+function adjustPlanTask(id, newTime) {
+  ensureTodayTasks();
+  const task = S.today.tasks.find(t => t.id === id);
+  if (!task || !task.editable) return false;
+  task.time = newTime;
+  saveData();
+  renderPlanList();
+  return true;
+}
+
+// 删除/取消计划项
+function removePlanTask(id) {
+  ensureTodayTasks();
+  const idx = S.today.tasks.findIndex(t => t.id === id);
+  if (idx < 0) return false;
+  S.today.tasks.splice(idx, 1);
+  saveData();
+  renderPlanList();
+  return true;
+}
+
+// 首页营养评估
+function renderHomeAssess(totals) {
+  const assess = assessNutrition(totals, S.settings);
+  const order = ['pro','sfat','sugar','fiber','na','kcal','carbs','fat'];
+  const names = { pro:'蛋白质', sfat:'饱和脂肪', sugar:'总糖', fiber:'膳食纤维', na:'钠', kcal:'热量', carbs:'碳水', fat:'总脂肪' };
+  const units = { pro:'g', sfat:'g', sugar:'g', fiber:'g', na:'mg', kcal:'kcal', carbs:'g', fat:'g' };
+  
+  let html = '';
+  for (const key of order) {
+    const a = assess[key];
+    if (!a) continue;
+    const s = a.status;
+    const badgeClass = s === 'good' ? 'badge-good' : s === 'low' ? 'badge-low' : 'badge-high';
+    const statusText = s === 'good' ? '达标 ✓' : s === 'low' ? '偏低' : '超标';
+    
+    let target = '';
+    if (a.min && a.max) target = `${a.min}-${a.max}`;
+    else if (a.min) target = `≥${a.min}`;
+    else target = `≤${a.max}`;
+    
+    html += `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:13px">${names[key]}</span>
+          <span style="font-size:12px"><strong>${a.value}</strong> / ${target}${units[key]} <span class="badge ${badgeClass}">${statusText}</span></span>
+        </div>
+        <div class="progress-bar"><div class="fill ${s}" style="width:${Math.min(100, a.percent)}%"></div></div>
+        ${s !== 'good' ? `<div style="font-size:11px;color:var(--text-3);margin-top:4px">${a.impact}<br>💡 ${a.remedy}</div>` : ''}
       </div>
     `;
-  }).join('');
+  }
   
-  document.getElementById('timeline').innerHTML = finalItems;
+  document.getElementById('home-nutrition-assess').innerHTML = html;
 }
 
 function renderRecommend() {
@@ -3236,6 +3519,325 @@ async function sendChat() {
 function refreshRecommend() {
   renderRecommend();
   toast('已更新推荐');
+}
+
+// ============================================================
+// ===== 智能录入 (Smart Input) =====
+// ============================================================
+let smartInputImages = []; // 暂存的图片base64
+
+function quickInput(text) {
+  document.getElementById('ai-input').value = text;
+  document.getElementById('ai-input').focus();
+}
+
+function handleAiImageUpload(event) {
+  const files = event.target.files;
+  if (!files || !files.length) return;
+  
+  const previewBar = document.getElementById('image-preview-bar');
+  previewBar.style.display = 'flex';
+  
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      smartInputImages.push(base64);
+      
+      const thumb = document.createElement('div');
+      thumb.style.cssText = 'position:relative;flex-shrink:0;width:60px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg-card)';
+      thumb.innerHTML = `
+        <img src="${base64}" style="width:100%;height:100%;object-fit:cover">
+        <button onclick="this.parentElement.remove();smartInputImages=smartInputImages.filter(i=>i!=='${base64.substring(0,50)}...')"
+          style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);
+          color:#fff;border:none;font-size:11px;cursor:pointer;padding:0;line-height:18px">✕</button>
+      `;
+      previewBar.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  }
+  
+  event.target.value = '';
+}
+
+function appendChatMessage(role, text, images = []) {
+  const container = document.getElementById('chat-messages');
+  const isUser = role === 'user';
+  
+  const div = document.createElement('div');
+  div.style.cssText = `margin-bottom:12px;${isUser ? 'text-align:right' : ''}`;
+  
+  let imgsHtml = '';
+  if (images && images.length) {
+    imgsHtml = images.map(img => 
+      `<img src="${img}" style="max-width:200px;border-radius:8px;margin-bottom:6px;${isUser?'':'display:inline-block'}">`
+    ).join('');
+  }
+  
+  const label = isUser ? '你' : 'AI助手';
+  const align = isUser ? 'margin-left:auto;border-radius:12px 12px 4px 12px' : 'border-radius:12px 12px 12px 4px';
+  const bg = isUser ? 'background:var(--primary);color:#000' : 'background:var(--bg-card)';
+  
+  div.innerHTML = `
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:4px">${label}</div>
+    ${imgsHtml}
+    <div style="${bg};padding:10px 14px;${align};font-size:14px;display:inline-block;max-width:85%;text-align:left">
+      ${text || '<span style="color:var(--text-3)">思考中...</span>'}
+    </div>
+    <div id="ai-result-card"></div>
+  `;
+  
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  
+  return div;
+}
+
+async function sendAiInput() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  
+  if (!text && smartInputImages.length === 0) {
+    toast('请输入内容或上传图片');
+    return;
+  }
+  
+  // 用户消息
+  appendChatMessage('user', text, smartInputImages);
+  
+  // AI回复（占位）
+  const aiMsg = appendChatMessage('bot', '');
+  const bubble = aiMsg.querySelector('div:nth-child(2)');
+  const resultCard = aiMsg.querySelector('#ai-result-card');
+  const images = [...smartInputImages];
+  
+  // 清空输入
+  input.value = '';
+  smartInputImages = [];
+  document.getElementById('image-preview-bar').innerHTML = '';
+  document.getElementById('image-preview-bar').style.display = 'none';
+  
+  try {
+    const result = await AI.aiSmartParse(text, images);
+    const parsed = parseAIResult(result);
+    
+    if (!parsed) {
+      bubble.textContent = '抱歉，我没太理解，请换一种说法试试。';
+      return;
+    }
+    
+    // 显示识别结果
+    bubble.textContent = parsed.reply || '已识别，请看下方确认';
+    
+    // 生成结果卡片
+    resultCard.outerHTML = renderSmartResultCard(parsed, images);
+    
+  } catch (err) {
+    bubble.innerHTML = `<span style="color:var(--danger)">出错了：${err.message}</span>`;
+  }
+}
+
+function parseAIResult(result) {
+  try {
+    // 尝试提取JSON
+    let jsonStr = result;
+    if (typeof result === 'string') {
+      const match = result.match(/\{[\s\S]*\}/);
+      if (match) jsonStr = match[0];
+      return JSON.parse(jsonStr);
+    }
+    return result;
+  } catch (e) {
+    console.error('解析失败', e);
+    return null;
+  }
+}
+
+function renderSmartResultCard(data, images) {
+  let html = '<div class="ai-result-card" id="result-card">';
+  html += `<div class="result-title">
+    <span class="tag">${getIntentLabel(data.intent)}</span>
+    <span style="font-size:11px;color:var(--text-3)">置信度 ${Math.round((data.confidence||0.8)*100)}%</span>
+  </div>`;
+  
+  // 饮食
+  if (data.diet && data.diet.meals && data.diet.meals.length) {
+    html += '<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-2);font-weight:500">🍽️ 饮食记录：</span>';
+    data.diet.meals.forEach(m => {
+      html += `<div class="result-row"><span class="label">${m.name}${m.matchedFood?` (${m.matchedFood})`:''}</span><span class="value">${m.grams}g</span></div>`;
+    });
+    html += '</div>';
+  }
+  
+  // 体重
+  if (data.weight && data.weight.weight) {
+    html += '<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-2);font-weight:500">⚖️ 体重数据：</span>';
+    html += `<div class="result-row"><span class="label">体重</span><span class="value">${data.weight.weight} kg</span></div>`;
+    if (data.weight.bodyFatRate) html += `<div class="result-row"><span class="label">体脂率</span><span class="value">${data.weight.bodyFatRate}%</span></div>`;
+    if (data.weight.muscleMass) html += `<div class="result-row"><span class="label">肌肉量</span><span class="value">${data.weight.muscleMass} kg</span></div>`;
+    html += `<div class="result-row"><span class="label">类型</span><span class="value">${data.weight.type==='morning'?'晨起':data.weight.type==='evening'?'睡前':'自动判断'}</span></div>`;
+    html += '</div>';
+  }
+  
+  // 运动
+  if (data.exercise && data.exercise.items && data.exercise.items.length) {
+    html += '<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-2);font-weight:500">🏃 运动打卡：</span>';
+    data.exercise.items.forEach(e => {
+      html += `<div class="result-row"><span class="label">${e.name}</span><span class="value">${e.done?'✓ 完成':'未完成'}</span></div>`;
+    });
+    html += '</div>';
+  }
+  
+  // 计划调整
+  if (data.planAdjust && data.planAdjust.action) {
+    html += '<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-2);font-weight:500">📋 计划调整：</span>';
+    html += `<div class="result-row"><span class="label">动作</span><span class="value">${data.planAdjust.action==='move_time'?'修改时间':data.planAdjust.action==='cancel'?'取消':'新增'}</span></div>`;
+    if (data.planAdjust.taskName) html += `<div class="result-row"><span class="label">任务</span><span class="value">${data.planAdjust.taskName}</span></div>`;
+    if (data.planAdjust.newTime) html += `<div class="result-row"><span class="label">新时间</span><span class="value">${data.planAdjust.newTime}</span></div>`;
+    html += '</div>';
+  }
+  
+  // 操作按钮
+  html += '<div class="result-actions">';
+  html += `<button class="btn btn-primary btn-sm" onclick="applySmartResult(${JSON.stringify(data).replace(/"/g,'&quot;')})">✓ 确认保存</button>`;
+  html += `<button class="btn btn-outline btn-sm" onclick="this.closest('.ai-result-card').remove()">取消</button>`;
+  html += '</div>';
+  
+  html += '</div>';
+  return html;
+}
+
+function getIntentLabel(intent) {
+  const map = {
+    'diet_record': '饮食记录',
+    'weight_record': '体重记录',
+    'exercise_checkin': '运动打卡',
+    'plan_adjust': '计划调整',
+    'plan_cancel': '取消计划',
+    'query': '查询',
+    'other': '其他'
+  };
+  return map[intent] || intent;
+}
+
+function applySmartResult(data) {
+  let applied = false;
+  
+  // 饮食
+  if (data.diet && data.diet.meals && data.diet.meals.length) {
+    for (const m of data.diet.meals) {
+      // 尝试匹配食材库
+      let food = S.foods.find(f => 
+        f.n === m.matchedFood || 
+        f.n === m.name ||
+        f.n.includes(m.name.substring(0, 2))
+      );
+      
+      if (food) {
+        const ratio = (m.grams || 100) / food.base;
+        S.today.meals.push({
+          id: Date.now() + Math.random(),
+          name: food.n,
+          grams: m.grams || 100,
+          kcal: Math.round(food.kcal * ratio * 10) / 10,
+          pro: Math.round(food.pro * ratio * 10) / 10,
+          fat: Math.round(food.fat * ratio * 10) / 10,
+          sfat: Math.round(food.sfat * ratio * 10) / 10,
+          carbs: Math.round(food.carbs * ratio * 10) / 10,
+          fiber: food.fiber ? Math.round(food.fiber * ratio * 10) / 10 : 0,
+          sugar: food.sugar ? Math.round(food.sugar * ratio * 10) / 10 : 0,
+          na: food.na ? Math.round(food.na * ratio * 10) / 10 : 0
+        });
+      } else {
+        // 未匹配，按大致估算添加
+        S.today.meals.push({
+          id: Date.now() + Math.random(),
+          name: m.name + ' (估算)',
+          grams: m.grams || 100,
+          kcal: Math.round((m.grams || 100) * 1.5),
+          pro: 0, fat: 0, sfat: 0, carbs: 0, fiber: 0, sugar: 0, na: 0
+        });
+      }
+    }
+    applied = true;
+  }
+  
+  // 体重
+  if (data.weight && data.weight.weight) {
+    const type = data.weight.type === 'evening' ? 'evening' : 'morning';
+    const hist = S.weightHistory.find(h => h.date === getTodayStr()) || { date: getTodayStr() };
+    if (type === 'morning') {
+      S.today.weightMorning = data.weight.weight;
+      hist.morning = data.weight.weight;
+    } else {
+      S.today.weightEvening = data.weight.weight;
+      hist.evening = data.weight.weight;
+    }
+    if (data.weight.bodyFatRate) {
+      if (!hist.bodyData) hist.bodyData = {};
+      hist.bodyData.bodyFatRate = data.weight.bodyFatRate;
+    }
+    if (data.weight.muscleMass) {
+      if (!hist.bodyData) hist.bodyData = {};
+      hist.bodyData.muscleMass = data.weight.muscleMass;
+    }
+    if (!S.weightHistory.find(h => h.date === getTodayStr())) {
+      S.weightHistory.push(hist);
+    }
+    applied = true;
+  }
+  
+  // 运动
+  if (data.exercise && data.exercise.items && data.exercise.items.length) {
+    for (const e of data.exercise.items) {
+      if (e.index !== undefined && e.done) {
+        S.today.exercise[e.index] = true;
+      }
+    }
+    applied = true;
+  }
+  
+  // 计划调整
+  if (data.planAdjust && data.planAdjust.action) {
+    ensureTodayTasks();
+    const pa = data.planAdjust;
+    
+    if (pa.action === 'cancel' && pa.taskName) {
+      const task = S.today.tasks.find(t => 
+        t.name.includes(pa.taskName.substring(0, 2)) || 
+        pa.taskName.includes(t.name.substring(0, 2))
+      );
+      if (task) {
+        const idx = S.today.tasks.indexOf(task);
+        S.today.tasks.splice(idx, 1);
+        applied = true;
+      }
+    }
+    
+    if (pa.action === 'move_time' && pa.taskName && pa.newTime) {
+      const task = S.today.tasks.find(t => 
+        t.name.includes(pa.taskName.substring(0, 2)) || 
+        pa.taskName.includes(t.name.substring(0, 2))
+      );
+      if (task) {
+        task.time = pa.newTime;
+        applied = true;
+      }
+    }
+  }
+  
+  if (applied) {
+    saveData();
+    renderHome();
+    renderPlanList();
+    toast('已保存 ✓');
+  } else {
+    toast('没有可保存的数据');
+  }
+  
+  // 关闭卡片
+  event && event.target && event.target.closest('.ai-result-card') && 
+    event.target.closest('.ai-result-card').remove();
 }
 
 // ---- Toast ----
