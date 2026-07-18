@@ -1942,7 +1942,7 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
   },
 
   // 7. AI 智能录入解析（文字+图片混合，自动分配模块）
-  async aiSmartParse(text, images = []) {
+  async aiSmartParse(text, images = [], onProgress = null) {
     const modelId = S.settings.modelVision || S.settings.modelChat;
     if (!modelId) throw new Error('请先在"我的→AI设置"中配置模型 Endpoint ID');
     
@@ -2035,7 +2035,13 @@ ${report.risks.map(r => `- ${r.message}`).join('\n')}
     }
     
     const messages = [{ role: 'user', content }];
-    return this.call(messages, modelId);
+    // 用流式输出避免浏览器超时（模型生成JSON较慢）
+    let fullResult = '';
+    await this.call(messages, modelId, true, (delta, text) => {
+      fullResult = text;
+      if (onProgress) onProgress(text);
+    });
+    return fullResult;
   }
 };
 
@@ -3796,7 +3802,18 @@ async function sendAiInput() {
   document.getElementById('image-preview-bar').style.display = 'none';
   
   try {
-    const result = await AI.aiSmartParse(text, images);
+    // 流式输出，显示进度避免超时感
+    let streamText = '';
+    const result = await AI.aiSmartParse(text, images, (partial) => {
+      streamText = partial;
+      // 显示流式输出（去掉markdown代码块标记，只显示文本部分）
+      let display = partial;
+      if (display.length > 500) {
+        display = display.substring(0, 500) + '...';
+      }
+      bubble.innerHTML = `<div style="font-size:11px;color:var(--text-3);margin-bottom:4px">识别中... ${partial.length} 字</div><div style="font-size:12px;color:var(--text-2);font-family:monospace;white-space:pre-wrap;word-break:break-all">${display}</div>`;
+    });
+    
     const parsed = parseAIResult(result);
     
     if (!parsed) {
